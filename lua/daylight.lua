@@ -36,30 +36,35 @@ local configuration = {
 }
 local current_timer = nil
 
+local function change_colorscheme()
+   local current_colorscheme = vim.g.colors_name
+
+   local ctime = os.date("*t")
+   if os.date("*t").hour <= configuration.night.time and ctime.hour >= configuration.day.time then
+
+      vim.opt.background = "light"
+      if current_colorscheme ~= configuration.day.name then
+         vim.cmd("colorscheme " .. configuration.day.name)
+      end
+   else
+
+      vim.opt.background = "dark"
+      if current_colorscheme ~= configuration.night.name then
+         vim.cmd("colorscheme " .. configuration.night.name)
+      end
+   end
+end
+
 daylight.start = function()
+
+   change_colorscheme()
+
    if current_timer ~= nil then
       vim.notify("[daylight.nvim] There is already a timer set!", vim.log.levels.ERROR)
       return
    end
 
-   current_timer = timer.init(configuration.interval, function()
-      local current_colorscheme = vim.g.colors_name
-
-      local ctime = os.date("*t")
-      if os.date("*t").hour <= configuration.night.time and ctime.hour >= configuration.day.time then
-
-         vim.opt.background = "light"
-         if current_colorscheme ~= configuration.day.name then
-            vim.cmd("colorscheme " .. configuration.day.name)
-         end
-      else
-
-         vim.opt.background = "dark"
-         if current_colorscheme ~= configuration.night.name then
-            vim.cmd("colorscheme " .. configuration.night.name)
-         end
-      end
-   end)
+   current_timer = timer.init(configuration.interval, change_colorscheme)
 end
 
 daylight.stop = function()
