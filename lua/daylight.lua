@@ -42,11 +42,11 @@ daylight.start = function()
       return
    end
 
+   local ctime = os.date("*t")
    current_timer = timer.init(configuration.interval, function()
-      local ctime = os.date("*t")
       local current_colorscheme = vim.g.colors_name
 
-      if (os.date("*t").hour <= configuration.night.time) and (ctime.hour >= configuration.day.time) then
+      if os.date("*t").hour <= configuration.night.time and ctime.hour >= configuration.day.time then
          vim.notify("[daylight.nvim] Changing background to 'light' ...")
          vim.opt.background = "light"
          if current_colorscheme ~= configuration.day.name then
