@@ -30,7 +30,7 @@ local configuration = {
   },
   night = {
     name = vim.g.colors_name,
-    time = 20,
+    time = 19,
   },
   interval = 60000, -- 1m
 } as config
@@ -43,17 +43,17 @@ daylight.start = function()
   end
 
   current_timer = timer.init(configuration.interval, function()
-    local ctime = os.date("*t")
     local current_colorscheme = vim.g.colors_name
 
-    if (os.date("*t").hour <= configuration.night.time) and (ctime.hour >= configuration.day.time) then
-      vim.notify("[daylight.nvim] Changing background to 'light' ...")
+    local ctime = os.date("*t")
+    if os.date("*t").hour <= configuration.night.time and ctime.hour >= configuration.day.time then
+      -- vim.notify("[daylight.nvim] Changing background to 'light' ...")
       vim.opt.background = "light"
       if current_colorscheme ~= configuration.day.name then
         vim.cmd("colorscheme " .. configuration.day.name)
       end
     else
-      vim.notify("[daylight.nvim] Changing background to 'dark' ...")
+      -- vim.notify("[daylight.nvim] Changing background to 'dark' ...")
       vim.opt.background = "dark"
       if current_colorscheme ~= configuration.night.name then
         vim.cmd("colorscheme " .. configuration.night.name)
