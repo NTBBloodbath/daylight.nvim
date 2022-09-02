@@ -10,9 +10,7 @@ end
 
 timer.init = function(interval: number, cb: function): vim.loop.Timer
   local t = vim.loop.new_timer() as vim.loop.Timer
-  t:start(interval, interval, function()
-    cb()
-  end)
+  t:start(interval, interval, vim.schedule_wrap(cb))
   return t
 end
 

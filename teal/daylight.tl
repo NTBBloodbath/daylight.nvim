@@ -30,14 +30,14 @@ local configuration = {
   },
   night = {
     name = vim.g.colors_name,
-    time = 18,
+    time = 20,
   },
   interval = 60000, -- 1m
 } as config
 local current_timer: vim.loop.Timer = nil
 
 daylight.start = function()
-  if current_timer == nil then
+  if current_timer ~= nil then
     vim.notify("[daylight.nvim] There is already a timer set!", vim.log.levels.ERROR)
     return
   end
@@ -46,12 +46,14 @@ daylight.start = function()
     local ctime = os.date("*t")
     local current_colorscheme = vim.g.colors_name
 
-    if (os.date("*t").hour <= configuration.night.time) and (ctime.hour >= configuration.day.time) then
+    if (os.date("*t").hour <= configuration.night.time and os.date("*t").min >= 6) and (ctime.hour >= configuration.day.time) then
+      vim.notify("[daylight.nvim] Changing background to 'light' ...")
       vim.opt.background = "light"
       if current_colorscheme ~= configuration.day.name then
         vim.cmd("colorscheme " .. configuration.day.name)
       end
     else
+      vim.notify("[daylight.nvim] Changing background to 'dark' ...")
       vim.opt.background = "dark"
       if current_colorscheme ~= configuration.night.name then
         vim.cmd("colorscheme " .. configuration.night.name)
@@ -84,25 +86,10 @@ daylight.setup = function(user_config: config)
   end
   configuration = vim.tbl_deep_extend("force", configuration as table, user_config as table) as config
 
-  if current_timer == nil then
-    current_timer = timer.init(configuration.interval, function()
-      local ctime = os.date("*t")
-      local current_colorscheme = vim.g.colors_name
+  -- Start daylight timers
+  daylight.start()
 
-      if (os.date("*t").hour <= 18) and (ctime.hour >= 8) then
-        if current_colorscheme ~= configuration.day.name then
-          vim.cmd("colorscheme " .. configuration.day.name)
-        end
-        vim.opt.background = "light"
-      else
-        if current_colorscheme ~= configuration.night.name then
-          vim.cmd("colorscheme " .. configuration.night.name)
-        end
-        vim.opt.background = "dark"
-      end
-    end)
-  end
-
+  -- Create user commands
   vim.api.nvim_create_user_command("DaylightStart", daylight.start, {
     desc = "Start daylight.nvim timer",
   })

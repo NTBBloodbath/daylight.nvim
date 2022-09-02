@@ -18,7 +18,7 @@ use({
       },
       night = {
         name = vim.g.colors_name,
-        time = 18, -- 6 pm
+        time = 20, -- 8 pm
       },
       interval = 60000, -- Time in milliseconds, 1 minute
     })
