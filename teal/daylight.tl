@@ -40,14 +40,19 @@ local function change_colorscheme()
   local current_colorscheme = vim.g.colors_name
 
   local ctime = os.date("*t")
+  local current_background = vim.o.background
   if os.date("*t").hour <= configuration.night.time and ctime.hour >= configuration.day.time then
-    -- vim.notify("[daylight.nvim] Changing background to 'light' ...")
+    if current_background ~= "light" then
+      vim.notify("[daylight.nvim] Changing background to 'light' ...")
+    end
     vim.opt.background = "light"
     if current_colorscheme ~= configuration.day.name then
       vim.cmd("colorscheme " .. configuration.day.name)
     end
   else
-    -- vim.notify("[daylight.nvim] Changing background to 'dark' ...")
+    if current_background ~= "dark" then
+      vim.notify("[daylight.nvim] Changing background to 'dark' ...")
+    end
     vim.opt.background = "dark"
     if current_colorscheme ~= configuration.night.name then
       vim.cmd("colorscheme " .. configuration.night.name)
