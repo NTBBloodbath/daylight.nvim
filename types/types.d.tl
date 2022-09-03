@@ -1,363 +1,2841 @@
-global _: any
-
-global unpack: function<T>({T}, number, number): T...
-
-local record api
-  record UserCmdParams
-    args: string
-    bang: boolean
-    line1: integer
-    line2: integer
-    range: integer
-    count: number
-    reg: string
-    mods: string
-
-    record Mods
-      browse       : boolean
-      confirm      : boolean
-      emsg_silent  : boolean
-      hide         : boolean
-      keepalt      : boolean
-      keepjumps    : boolean
-      keepmarks    : boolean
-      keeppatterns : boolean
-      lockmarks    : boolean
-      noautocmd    : boolean
-      noswapfile   : boolean
-      sandbox      : boolean
-      silent       : boolean
-      tab          : integer
-      verbose      : integer
-      vertical     : boolean
-
-      enum Split ''
-        'aboveleft'
-        'belowright'
-        'topleft'
-        'botright'
-      end
-
-      split : Split
-    end
-    smods: Mods
-  end
-
-  record UserCmdOpts
-    nargs: string|integer
-    range: boolean|string|integer
-    count: boolean|integer
-    addr: string
-    bang: boolean
-    bar: boolean
-    register: boolean
-    force: boolean
-    desc: string
-    complete: string|function(arglead: string, line: string): {string}
-  end
-  nvim_create_user_command: function(string, function(UserCmdParams), UserCmdOpts)
-
-  record GetExtmarOpts
-    limit: integer
-    details: boolean
-  end
-
-  nvim_create_namespace: function(string): integer
-
-  record AugroupOpts
-    clear: boolean
-  end
-
-  nvim_create_augroup: function(string, AugroupOpts): integer
-
-  record AutoCmdOpts
-    callback: function()
-    command: string
-    group: string
-    pattern: string|{string}
-    once: boolean
-    nested: boolean
-    desc: string
-    buffer: integer
-  end
-
-  nvim_create_autocmd: function(string|{string}, AutoCmdOpts): integer
-end
+-- vim: ft=teal expandtab sw=3 ts=3
 
 global record vim
-  api: api
-  record fn
-    iconv: function(string, string, string): string
-    line: function(string): integer
-    join: function({any}, string): string
-    getpos: function(string): {integer}
-    executable: function(string): integer
-    expand: function(string): string
-    foldclosed: function(integer): integer
-    foldclosedend: function(integer): integer
-    getcwd: function(): string
-    input: function(string, string): string
+   -- TODO: Either find a way to generate these or at least find a comprehensive list to put a bunch of 'TODO' stub definitions here
+   --    Sadly, there doesn't seem to be a nice way to serialize all of these
+   --    since they're lazily brought in as you call them
+   --    this might be the only way since user defined functions are also called here
+   --    ex vim.fn["MyPlugin#MyFunction"]() so
+   -- VIM_fn = record -- if record maps were a thing
+   --    {string:function(...: any): (any)}
+   --    mode: function(): Mode
+   --    ...
+   -- end
 
-    record QFItem
-      bufnr: integer
-      filename: string
-      lnum: integer
-      nr: integer
-      text: string
-      type: string
-    end
+   -- TODO:
+   -- vim.treesitter
 
-    record QFWhat
-      context: any
-      efm: string
-      id: integer
-      idx: integer
-      items: {QFItem}
-      lines: {string}
-      nr: integer
-      quickfixtextfunc: string
-      title: string
-    end
+   fn: {string:function(...: any): (any)}
+   cmd: function(cmd: string)
+   call: function(func: string, ...: any)
+   call: function(string, ...: any): any
 
-    setqflist: function(list: {QFItem}, action: string, what: QFWhat)
-    setloclist: function(nr: integer, list: {QFItem}, action: string, what: QFWhat)
+   enum Mode
+      "n" -- Normal
+      "no" -- Operator-pending
+      "nov" -- Operator-pending (forced charwise |o_v|)
+      "noV" -- Operator-pending (forced linewise |o_V|)
+      "no" -- Operator-pending (forced blockwise |o_CTRL-V|)
+      "niI" -- Normal using |i_CTRL-O| in |Insert-mode|
+      "niR" -- Normal using |i_CTRL-O| in |Replace-mode|
+      "niV" -- Normal using |i_CTRL-O| in |Virtual-Replace-mode|
+      "v" -- Visual by character
+      "V" -- Visual by line
+      "" -- Visual blockwise
+      "s" -- Select by character
+      "S" -- Select by line
+      "" -- Select blockwise
+      "i" -- Insert
+      "ic" -- Insert mode completion |compl-generic|
+      "ix" -- Insert mode |i_CTRL-X| completion
+      "R" -- Replace |R|
+      "Rc" -- Replace mode completion |compl-generic|
+      "Rv" -- Virtual Replace |gR|
+      "Rx" -- Replace mode |i_CTRL-X| completion
+      "c" -- Command-line editing
+      "cv" -- Vim Ex mode |gQ|
+      "ce" -- Normal Ex mode |Q|
+      "r" -- Hit-enter prompt
+      "rm" -- The -- more -- prompt
+      "r?" -- |:confirm| query of some sort
+      "!" -- Shell or external command is executing
+      "t" -- Terminal mode: keys go to the job
+   end
 
-    sign_unplace: function(string, {string:any})
-    sign_place: function(number, string, string, string | number, {string:any})
+   record InspectOptions
+      depth: integer
+      newline: string
+      indent: string
+      process: function
+   end
+   inspect: function(any, InspectOptions): string
 
-    record SignPlaceItem
-      buffer: integer
-      group: string
-      id: integer
-      lnum: integer
-      name: string
-      priority: integer
-    end
-    sign_placelist: function({SignPlaceItem})
-    sign_getdefined: function(string): table
-
-    record SignPlacedInfo
-      bufnr: integer
-      record SignPlacedSigns
-        id: integer
-        name: string
-        group: string
-        lnum: integer
-        priority: integer
+   record log
+      record levels
+         DEBUG: integer
+         INFO: integer
+         HINT: integer
+         WARN: integer
+         ERROR: integer
       end
-      signs: {SignPlacedSigns}
-    end
-    sign_getplaced: function(integer, table): {SignPlacedInfo}
+   end
+   notify: function(msg: string, log_level: integer, opts: table)
+   notify_once: function(msg: string, level: integer, opt: table)
+   paste: function({string}, integer): boolean
+   schedule_wrap: function(function): function
+   deep_equal: function(any, any): boolean
+   deepcopy: function<T>(T): T
+   defer_fn: function(function, integer)
+   startswith: function(string, string): boolean
+   endswith: function(string, string): boolean
+   gsplit: function(string, string, boolean): function(): string
+   is_callable: function(any): boolean
+   list_extend: function<T>({T}, {T}, integer, integer): {T}
+   list_extend: function<T, K>({T}, {K}, integer, integer): {T|K}
+   list_slice: function<T>({T}, integer, integer): {T}
+   pesc: function(string): string
+   split: function(string, string, boolean): {string}
+   wait: function(integer)
 
-    sign_define: function(string, table): number
-    sign_undefine: function(string): number
-    strdisplaywidth: function(string, integer): integer
-    stridx: function(haystack: string, needle: string, start: integer): integer
-    string: function(any): string
-    tempname: function(): string
-    type: function(any): integer
-  end
+   tbl_add_reverse_lookup: function(table)
+   tbl_contains: function<T>({T}, T): boolean
 
-  cmd: function(string): any
+   tbl_count: function(table): integer
 
-  record g
-    colors_name: string
-  end
+   enum ExtendBehavior
+      "error"
+      "keep"
+      "force"
+   end
+   tbl_extend: function(ExtendBehavior, table, table, ...: table): table
+   tbl_extend: function<T>(ExtendBehavior, {T:any}, {T:any}, ...: {T:any}): {T:any}
+   tbl_extend: function<T>(ExtendBehavior, {any:T}, {any:T}, ...: {any:T}): {any:T}
+   tbl_extend: function<T,V>(ExtendBehavior, {T:V}, {T:V}, ...: {T:V}): {T:V}
+   tbl_deep_extend: function(ExtendBehavior, table, table, ...: table): table
+   tbl_deep_extend: function<T>(ExtendBehavior, {T:any}, {T:any}, ...: {T:any}): {T:any}
+   tbl_deep_extend: function<T>(ExtendBehavior, {any:T}, {any:T}, ...: {any:T}): {any:T}
+   tbl_deep_extend: function<T,V>(ExtendBehavior, {T:V}, {T:V}, ...: {T:V}): {T:V}
 
-  record opt
-    background: string
-  end
+   tbl_filter: function<T>(function(T): (boolean), {T})
+   tbl_filter: function(function(any): (boolean), {any})
 
-  record loop
-    cwd: function(): string
-    record Timer
-      userdata
+   tbl_flatten: function<T>({T|{T}}): {T}
+   tbl_flatten: function({any|{any}}): {any}
 
-      start: function(Timer, number, number, function): number
-      stop: function(Timer): number
-      close: function(Timer): number
-      again: function(Timer): number
-      set_repeat: function(Timer, number): number
-      get_repeat: function(Timer): number
-      get_due_in: function(Timer): number
-    end
-    hrtime: function(): number
-    new_timer: function(): Timer | string
-    timer_start: function(Timer, integer, integer, function()): integer | string
+   tbl_isempty: function(table): boolean
 
-    new_fs_event: function()
+   tbl_islist: function(table): boolean
 
-    record FSPollObj
-      userdata
-      close: function(FSPollObj)
-      start: function(FSPollObj, string, integer, function)
-      stop: function(FSPollObj)
-      getpath: function(FSPollObj): string
-    end
-    new_fs_poll: function(): FSPollObj | string
+   tbl_keys: function<T>({T:any}): {T}
 
-    record FsStatRet
-      dev : number
-      mode : number
-      nlink : number
-      uid : number
-      gid : number
-      rdev : number
-      ino : number
-      size : number
-      blksize : number
-      blocks : number
-      flags : number
-      gen : number
-      record atime
-        sec : number
-        nsec : number
+   tbl_values: function<T>({any:T}): {T}
+
+   tbl_map: function<A, B, C>(function(B): (C), {A:B}): {A:C}
+   tbl_map: function(function(any): (any), table): table
+
+   trim: function(string): string
+
+   enum TypeName
+      "table" "t"
+      "string" "s"
+      "number" "n"
+      "boolean" "b"
+      "function" "f"
+      "nil"
+      "thread"
+      "userdata"
+   end
+   -- Technically, this should be a union of tuples since the types are dependent and this allows for invalid combos
+   validate: function({string:{any, TypeName | function(any): (boolean, string), boolean | string}})
+   -- should be {string:{any, TypeName, boolean} | {any, function(any): (boolean, string)}, string}}
+
+   record Regex
+      match_str: function(Regex, string): integer, integer
+      match_line: function(Regex, integer, integer, integer, integer): integer, integer
+   end
+   regex: function(string): Regex
+
+   diff: function(a: string, b: string): string
+   -- TODO
+   -- diff: function(a: string, b: string, options: DiffOptions): string | {integer}
+
+   record VersionInfo
+      api_compatible: integer
+      api_level: integer
+      api_prerelease: integer
+      major: integer
+      minor: integer
+      patch: integer
+   end
+
+   version: function(): VersionInfo
+
+   uri_from_bufnr: function(bufnr: integer): string
+   uri_from_fname: function(path: string): string
+   uri_to_bufnr: function(uri: string): integer
+   uri_to_fname: function(uri: string): string
+
+   pretty_print: function(obj: any): string
+
+   region: function(bufnr: integer, pos1: {integer}, pos2: {integer}, regtype: string, inclusive: boolean): {integer:{integer}}
+
+   record filetype
+      -- TODO - replace table with options record
+      add: function(filetypes: table)
+
+      match: function(name: string, bufnr: integer)
+   end
+
+   record mpack
+      encode: function(obj: any): string
+      decode: function(str: string): any
+   end
+
+   record spell
+      check: function(str: string): {{string | integer}}
+   end
+
+   -- TODO: these are a pitiful approximation of luv's types
+   -- once Teal has some form of type inheritance/composition and luv.d.tl is written
+   -- just steal from that
+   record loop
+      cwd: function(): string
+      sleep: function(integer)
+      record Handle
+         close: function(Handle)
+         is_closing: function(Timer)
       end
-      record mtime
-        sec : number
-        nsec : number
+      record Pipe
+         read_start: function(Pipe, function(string, string))
+         read_stop: function(Pipe)
+         close: function(Pipe)
       end
-      record ctime
-        sec : number
-        nsec : number
+      record Process
+         close: function(Process)
       end
-      record birthtime
-        sec : number
-        nsec : number
+      record Timer
+         start: function(Timer, integer, integer, function)
+         close: function(Timer)
+         stop: function(Timer)
+         is_closing: function(Timer)
       end
-      type : string
-    end
+      new_timer: function(): Timer
 
-    fs_stat: function(string, function): FsStatRet
+      new_pipe: function(boolean): Pipe
 
-    fs_realpath: function(string): string
+      -- TODO: the rest of these
+      record SpawnOptions
+         cwd: string
+         args: {string}
+         stdio: {Pipe, Pipe, Pipe}
+      end
+      spawn: function(string, SpawnOptions, function): Process
 
-    new_tcp: function()
+      read_start: function(Pipe, function(string, string))
 
-    sleep: function(integer)
+      record Fs userdata end
+      fs_open: function(string, string|integer, integer): integer, string, string
+      fs_open: function(string, string|integer, integer, function(string, integer)): Fs
 
-    record Handle
-      userdata
+      fs_close: function(integer): boolean, string, string
+      fs_close: function(integer, function(string, boolean)): Fs
 
-      close: function(Handle)
-      is_closing: function(Handle): boolean | string
-    end
+      fs_read: function(integer, integer, integer): string, string, string
+      fs_read: function(integer, integer, integer, function(string, integer)): Fs
 
-    record Pipe
-      userdata
+      fs_write: function(integer, string|{string}, integer): integer, string, string
+      fs_write: function(integer, string|{string}, integer, function(string, integer)): Fs
 
-      close: function(Pipe)
-      is_closing: function(Pipe): boolean | string
-      read_start: function(Pipe, err: any, data: string)
-      read_stop: function(Pipe)
-      write: function(Pipe, string, function())
+      record FsStat
+         record Time
+            sec: integer
+            nsec: integer
+         end
+         dev: integer
+         mode: integer
+         nlink: integer
+         uid: integer
+         gid: integer
+         rdev: integer
+         ino: integer
+         size: integer
+         blksize: integer
+         blocks: integer
+         flags: integer
+         gen: integer
+         atime: Time
+         mtime: Time
+         ctime: Time
+         birthtime: Time
+         type: string
+      end
+      fs_stat: function(string): FsStat, string, string
+      fs_stat: function(string, function(string, FsStat))
 
-      open: function(any)
-    end
+      fs_lstat: function(string): FsStat, string, string
+      fs_lstat: function(string, function(string, FsStat))
 
-    record Process
-      userdata
+      fs_fstat: function(integer): FsStat, string, string
+      fs_fstat: function(integer, function(string, FsStat))
 
-      close: function(Process)
-    end
+      fs_scandir: function(string, function(string, Fs)): Fs, string, string
+      fs_scandir_next: function(Fs): string, string, string
 
-    record SpawnOpts
-      stdio: {Pipe, Pipe, Pipe}
-      args: {string}
+      fs_mkdir: function(string, integer): boolean, string, string
+      fs_mkdir: function(string, integer, function(string, boolean)): Fs
+   end
+
+   in_fast_event: function(): boolean
+
+   type NIL = record userdata end -- special nil for filling tables
+
+   empty_dict: function(): table
+   on_key: function(function(string), integer): integer
+
+   rpcnotify: function(integer, string, ...: string)
+   rpcrequest: function(integer, string, ...: string)
+
+   stricmp: function(string, string): integer
+   str_utfindex: function(string, integer): integer, integer
+   str_byteindex: function(string, integer, boolean): integer
+
+   schedule: function(function)
+
+   schedule_wrap: function(function): function
+
+   type_idx: boolean
+
+   val_idx: boolean
+
+   types: {string|integer:string|integer}
+
+   record keymap
+      record DelOptions
+         buffer: boolean | integer
+      end
+
+      record SetOptions
+         buffer: boolean | integer
+         callback: function
+         desc: string
+         expr: boolean
+         nowait: boolean
+         remap: boolean
+         replace_keycodes: boolean
+         script: boolean
+         silent: boolean
+         unique: boolean
+      end
+
+      set: function(mode: string|{string}, lhs: string, rhs: string|function(), opts: SetOptions)
+      del: function(modes: string|{string}, lhs: string, opts: DelOptions)
+   end
+
+   record EventData --TODO: this is a vim thing, so types aren't really documented
+      abort: any
+      chan: integer
+      cmdlevel: any
+      cmdtype: any
       cwd: string
-      env: {string}
-    end
+      inclusive: boolean
+      scope: any
+      operator: any
+      regcontents: any
+      regname: any
+      regtype: any
+      visual: any
+      completed_item: any
+      height: any
+      width: any
+      row: integer
+      col: integer
+      size: any
+      scrollbar: any
+      changed_window: any
+   end
 
-    spawn: function(string, SpawnOpts, function(integer, integer)): Process, integer
+   record highlight
+      record Opts
+         higroup: string
+         timeout: integer
+         on_macro: boolean
+         on_visual: boolean
+         event: EventData
+      end
+      on_yank: function(Opts)
+      range: function(
+         bufnr: integer,
+         ns: integer,
+         higroup: string,
+         start: {integer, integer},
+         finish: {integer, integer},
+         rtype: any,
+         inclusive: boolean
+      )
+   end
 
-    read_start: function(Pipe, function)
-    new_pipe: function(boolean): Pipe | string
-    shutdown: function(any, function)
-    close: function(any, function)
+   record diagnostic
+      record Severity -- would be great if this could be a tuplerecord
+         {string}
+         ERROR: integer
+         WARN: integer
+         INFO: integer
+         HINT: integer
+         E: integer
+         W: integer
+         I: integer
+         H: integer
+      end
+      severity: Severity
 
-    record WorkCtx
-      queue: function(WorkCtx, ...:any)
-    end
+      record Diagnostic
+         lnum: integer -- The starting line of the diagnostic
+         end_lnum: integer -- The final line of the diagnostic
+         col: integer -- The starting column of the diagnostic
+         end_col: integer -- The final column of the diagnostic
+         severity: integer -- The severity of the diagnostic |vim.diagnostic.severity|
+         message: string -- The diagnostic text
+         source: string -- The source of the diagnostic
+      end
+      record ConfigOpts
+         record UnderlineOpts
+            severity: integer -- vim.diagnostic.severity
+         end
+         record VirtualTextOpts
+            severity: integer -- vim.diagnostic.severity
+            source: string
+            format: function(diagnostic: Diagnostic): string
+         end
+         record SignsOpts
+            severity: integer
+            priority: integer
+         end
 
-    new_work: function(function, function): WorkCtx
-  end
+         underline: boolean|UnderlineOpts
+         virtual_text: boolean|VirtualTextOpts
+         signs: boolean|SignsOpts
+         float: OpenFloatOpts
+         update_in_insert: boolean
+         severity_sort: boolean
+      end
+      record GetOpts
+         namespace: integer
+         lnum: integer
+         severity: integer -- vim.diagnostic.severity
+      end
+      record GotoOpts
+         namespace: integer
+         cursor_position: {integer, integer}
+         wrap: boolean
+         severity: integer -- vim.diagnostic.severity
+         float: boolean|OpenFloatOpts
+         win_id: integer
+      end
+      record OpenFloatOpts
+         enum Scope
+            "buffer"
+            "line"
+            "cursor"
+         end
 
-  in_fast_event: function(): boolean
+         namespace: integer
+         scope: Scope
+         pos: integer|{integer, integer}
+         severity_sort: boolean
+         severity: integer -- vim.diagnostic.severity
+         header: string|{string, string}
+         source: string
+         format: function(diagnostic: Diagnostic): string
+         prefix: string|{string, string}|function(diagnostic: Diagnostic, i: integer, total: integer): string, string
+      end
+      record SetLocListOpts
+         namespace: integer
+         winnr: integer
+         open: boolean
+         title: string
+         severity: integer -- vim.diagnostic.severity
+      end
+      record SetQfListOpts
+         namespace: integer
+         open: boolean
+         title: string
+         severity: integer -- vim.diagnostic.severity
+      end
+      config: function(opts: ConfigOpts, namespace: integer)
+      disable: function(bufnr: integer, namespace: integer)
+      enable: function(bufnr: integer, namespace: integer)
+      fromqflist: function(list: {any}): {Diagnostic}
+      get: function(bufnr: integer, opts: GetOpts)
+      get_namespace: function(namespace: integer): {string:integer}
+      get_namespace: function(namespace: integer): {{string:integer}}
+      get_next: function(opts: GotoOpts): Diagnostic
+      get_next_pos: function(opts: GotoOpts): {integer, integer}
+      get_prev: function(opts: GotoOpts): Diagnostic
+      get_prev_pos: function(opts: GotoOpts): {integer, integer}
+      goto_next: function(opts: GotoOpts)
+      goto_prev: function(opts: GotoOpts)
+      hide: function(namespace: integer, bufnr: integer)
+      match: function(str: string, pat: string, groups: {string}, severity_map: {string:string}, defaults: {string:any}): Diagnostic
+      open_float: function(opts: OpenFloatOpts): {integer, integer}
+      reset: function(namespace: integer, bufnr: integer)
+      set: function(namespace: integer, bufnr: integer, diagnostics: {Diagnostic}, opts: ConfigOpts)
+      setloclist: function(opts: SetLocListOpts)
+      setqflist: function(opts: SetQfListOpts)
+      show: function(namespace: integer, bufnr: integer, diagnostics: {Diagnostic}, opts: ConfigOpts)
+      toqflist: function({Diagnostic}): {string:any}
+   end
 
-  list_extend: function<T>({T}, {T}, integer, integer): {T}
-  list_slice: function<T>({T}, integer, integer): {T}
+   record lsp
+      record buf
+         hover: function
+      end
+      buf_attach_client: function(bufnr: integer, client_id: integer)
+      buf_get_clients: function(bufnr: integer)
+      buf_is_attached: function(bufnr: integer, client_id: integer)
+      buf_notify: function(bufnr: integer, method: string, params: string): boolean
+      buf_request: function(bufnr: integer, method: string, params: table, handler: function): {integer:integer}, function
+      buf_request_sync: function(bufnr: integer, method: string, params: table, timeout_ms: integer): {integer:integer}, string
 
-  record keymap
-    record Options
-      buffer: boolean|integer
-      expr: boolean
-    end
-    set: function(string|{string}, string, string|function, Options)
-  end
+      record Client
+         request: function(Client)
+      end
+      client: function(): Client
+   end
 
-  record log
-    record levels
-      WARN: integer
-      ERROR: integer
-      INFO: integer
-      DEBUG: integer
-    end
-  end
-  notify: function(string, integer, table)
-  pretty_print: function(any)
+   record opt
+      record Opt<T>
+         get: function<T>(Opt<T>): T
+         append: function<T>(Opt<string>): string
+         prepend: function<T>(Opt<string>): string
+         remove: function<T>(Opt<string>): string
+      end
 
-  split: function(string, string): {string}
-  split: function(string, string, boolean): {string}
+      -- NOTE: maybe there is a way to not repeat AllOptions record values here?
+      acd: Opt<boolean>|boolean
+      ai: Opt<boolean>|boolean
+      al: Opt<number>|number
+      aleph: Opt<number>|number
+      allowrevins: Opt<boolean>|boolean
+      ambiwidth: Opt<string>|string
+      ambw: Opt<string>|string
+      ar: Opt<boolean>|boolean
+      arab: Opt<boolean>|boolean
+      arabic: Opt<boolean>|boolean
+      arabicshape: Opt<boolean>|boolean
+      ari: Opt<boolean>|boolean
+      arshape: Opt<boolean>|boolean
+      autochdir: Opt<boolean>|boolean
+      autoindent: Opt<boolean>|boolean
+      autoread: Opt<boolean>|boolean
+      autowrite: Opt<boolean>|boolean
+      autowriteall: Opt<boolean>|boolean
+      aw: Opt<boolean>|boolean
+      awa: Opt<boolean>|boolean
+      background: Opt<string>|string
+      backspace: Opt<string>|string
+      backup: Opt<boolean>|boolean
+      backupcopy: Opt<string>|string
+      backupdir: Opt<string>|string
+      backupext: Opt<string>|string
+      backupskip: Opt<string>|string
+      bdir: Opt<string>|string
+      belloff: Opt<string>|string
+      bex: Opt<string>|string
+      bg: Opt<string>|string
+      bh: Opt<string>|string
+      bin: Opt<boolean>|boolean
+      binary: Opt<boolean>|boolean
+      bk: Opt<boolean>|boolean
+      bkc: Opt<string>|string
+      bl: Opt<boolean>|boolean
+      bo: Opt<string>|string
+      bomb: Opt<boolean>|boolean
+      breakat: Opt<string>|string
+      breakindent: Opt<boolean>|boolean
+      breakindentopt: Opt<string>|string
+      bri: Opt<boolean>|boolean
+      briopt: Opt<string>|string
+      brk: Opt<string>|string
+      browsedir: Opt<string>|string
+      bs: Opt<string>|string
+      bsdir: Opt<string>|string
+      bsk: Opt<string>|string
+      bt: Opt<string>|string
+      bufhidden: Opt<string>|string
+      buflisted: Opt<boolean>|boolean
+      buftype: Opt<string>|string
+      casemap: Opt<string>|string
+      cb: Opt<string>|string
+      cc: Opt<string>|string
+      ccv: Opt<string>|string
+      cd: Opt<string>|string
+      cdh: Opt<boolean>|boolean
+      cdhome: Opt<boolean>|boolean
+      cdpath: Opt<string>|string
+      cedit: Opt<string>|string
+      cf: Opt<boolean>|boolean
+      cfu: Opt<string>|string
+      ch: Opt<number>|number
+      channel: Opt<number>|number
+      charconvert: Opt<string>|string
+      ci: Opt<boolean>|boolean
+      cin: Opt<boolean>|boolean
+      cindent: Opt<boolean>|boolean
+      cink: Opt<string>|string
+      cinkeys: Opt<string>|string
+      cino: Opt<string>|string
+      cinoptions: Opt<string>|string
+      cinscopedecls: Opt<string>|string
+      cinsd: Opt<string>|string
+      cinw: Opt<string>|string
+      cinwords: Opt<string>|string
+      clipboard: Opt<string>|string
+      cmdheight: Opt<number>|number
+      cmdwinheight: Opt<number>|number
+      cmp: Opt<string>|string
+      cms: Opt<string>|string
+      co: Opt<number>|number
+      cocu: Opt<string>|string
+      cole: Opt<number>|number
+      colorcolumn: Opt<string>|string
+      columns: Opt<number>|number
+      com: Opt<string>|string
+      comments: Opt<string>|string
+      commentstring: Opt<string>|string
+      compatible: Opt<boolean>|boolean
+      complete: Opt<string>|string
+      completefunc: Opt<string>|string
+      completeopt: Opt<string>|string
+      completeslash: Opt<string>|string
+      concealcursor: Opt<string>|string
+      conceallevel: Opt<number>|number
+      confirm: Opt<boolean>|boolean
+      copyindent: Opt<boolean>|boolean
+      cot: Opt<string>|string
+      cp: Opt<boolean>|boolean
+      cpo: Opt<string>|string
+      cpoptions: Opt<string>|string
+      cpt: Opt<string>|string
+      crb: Opt<boolean>|boolean
+      cscopepathcomp: Opt<number>|number
+      cscopeprg: Opt<string>|string
+      cscopequickfix: Opt<string>|string
+      cscoperelative: Opt<boolean>|boolean
+      cscopetag: Opt<boolean>|boolean
+      cscopetagorder: Opt<number>|number
+      cscopeverbose: Opt<boolean>|boolean
+      csl: Opt<string>|string
+      cspc: Opt<number>|number
+      csprg: Opt<string>|string
+      csqf: Opt<string>|string
+      csre: Opt<boolean>|boolean
+      cst: Opt<boolean>|boolean
+      csto: Opt<number>|number
+      csverb: Opt<boolean>|boolean
+      cuc: Opt<boolean>|boolean
+      cul: Opt<boolean>|boolean
+      culopt: Opt<string>|string
+      cursorbind: Opt<boolean>|boolean
+      cursorcolumn: Opt<boolean>|boolean
+      cursorline: Opt<boolean>|boolean
+      cursorlineopt: Opt<string>|string
+      cwh: Opt<number>|number
+      debug: Opt<string>|string
+      deco: Opt<boolean>|boolean
+      def: Opt<string>|string
+      define: Opt<string>|string
+      delcombine: Opt<boolean>|boolean
+      dex: Opt<string>|string
+      dg: Opt<boolean>|boolean
+      dict: Opt<string>|string
+      dictionary: Opt<string>|string
+      diff: Opt<boolean>|boolean
+      diffexpr: Opt<string>|string
+      diffopt: Opt<string>|string
+      digraph: Opt<boolean>|boolean
+      dip: Opt<string>|string
+      dir: Opt<string>|string
+      directory: Opt<string>|string
+      display: Opt<string>|string
+      dy: Opt<string>|string
+      ea: Opt<boolean>|boolean
+      ead: Opt<string>|string
+      eadirection: Opt<string>|string
+      eb: Opt<boolean>|boolean
+      ed: Opt<boolean>|boolean
+      edcompatible: Opt<boolean>|boolean
+      ef: Opt<string>|string
+      efm: Opt<string>|string
+      ei: Opt<string>|string
+      emo: Opt<boolean>|boolean
+      emoji: Opt<boolean>|boolean
+      enc: Opt<string>|string
+      encoding: Opt<string>|string
+      endofline: Opt<boolean>|boolean
+      eol: Opt<boolean>|boolean
+      ep: Opt<string>|string
+      equalalways: Opt<boolean>|boolean
+      equalprg: Opt<string>|string
+      errorbells: Opt<boolean>|boolean
+      errorfile: Opt<string>|string
+      errorformat: Opt<string>|string
+      et: Opt<boolean>|boolean
+      eventignore: Opt<string>|string
+      ex: Opt<boolean>|boolean
+      expandtab: Opt<boolean>|boolean
+      exrc: Opt<boolean>|boolean
+      fcl: Opt<string>|string
+      fcs: Opt<string>|string
+      fdc: Opt<string>|string
+      fde: Opt<string>|string
+      fdi: Opt<string>|string
+      fdl: Opt<number>|number
+      fdls: Opt<number>|number
+      fdm: Opt<string>|string
+      fdn: Opt<number>|number
+      fdo: Opt<string>|string
+      fdt: Opt<string>|string
+      fen: Opt<boolean>|boolean
+      fenc: Opt<string>|string
+      fencs: Opt<string>|string
+      fex: Opt<string>|string
+      ff: Opt<string>|string
+      ffs: Opt<string>|string
+      fic: Opt<boolean>|boolean
+      fileencoding: Opt<string>|string
+      fileencodings: Opt<string>|string
+      fileformat: Opt<string>|string
+      fileformats: Opt<string>|string
+      fileignorecase: Opt<boolean>|boolean
+      filetype: Opt<string>|string
+      fillchars: Opt<string>|string
+      fixendofline: Opt<boolean>|boolean
+      fixeol: Opt<boolean>|boolean
+      flp: Opt<string>|string
+      fml: Opt<number>|number
+      fmr: Opt<string>|string
+      fo: Opt<string>|string
+      foldclose: Opt<string>|string
+      foldcolumn: Opt<string>|string
+      foldenable: Opt<boolean>|boolean
+      foldexpr: Opt<string>|string
+      foldignore: Opt<string>|string
+      foldlevel: Opt<number>|number
+      foldlevelstart: Opt<number>|number
+      foldmarker: Opt<string>|string
+      foldmethod: Opt<string>|string
+      foldminlines: Opt<number>|number
+      foldnestmax: Opt<number>|number
+      foldopen: Opt<string>|string
+      foldtext: Opt<string>|string
+      formatexpr: Opt<string>|string
+      formatlistpat: Opt<string>|string
+      formatoptions: Opt<string>|string
+      formatprg: Opt<string>|string
+      fp: Opt<string>|string
+      fs: Opt<boolean>|boolean
+      fsync: Opt<boolean>|boolean
+      ft: Opt<string>|string
+      gcr: Opt<string>|string
+      gd: Opt<boolean>|boolean
+      gdefault: Opt<boolean>|boolean
+      gfm: Opt<string>|string
+      gfn: Opt<string>|string
+      gfw: Opt<string>|string
+      go: Opt<string>|string
+      gp: Opt<string>|string
+      grepformat: Opt<string>|string
+      grepprg: Opt<string>|string
+      gtl: Opt<string>|string
+      gtt: Opt<string>|string
+      guicursor: Opt<string>|string
+      guifont: Opt<string>|string
+      guifontwide: Opt<string>|string
+      guioptions: Opt<string>|string
+      guitablabel: Opt<string>|string
+      guitabtooltip: Opt<string>|string
+      helpfile: Opt<string>|string
+      helpheight: Opt<number>|number
+      helplang: Opt<string>|string
+      hf: Opt<string>|string
+      hh: Opt<number>|number
+      hi: Opt<number>|number
+      hid: Opt<boolean>|boolean
+      hidden: Opt<boolean>|boolean
+      highlight: Opt<string>|string
+      history: Opt<number>|number
+      hk: Opt<boolean>|boolean
+      hkmap: Opt<boolean>|boolean
+      hkmapp: Opt<boolean>|boolean
+      hkp: Opt<boolean>|boolean
+      hl: Opt<string>|string
+      hlg: Opt<string>|string
+      hls: Opt<boolean>|boolean
+      hlsearch: Opt<boolean>|boolean
+      ic: Opt<boolean>|boolean
+      icm: Opt<string>|string
+      icon: Opt<boolean>|boolean
+      iconstring: Opt<string>|string
+      ignorecase: Opt<boolean>|boolean
+      im: Opt<boolean>|boolean
+      imc: Opt<boolean>|boolean
+      imcmdline: Opt<boolean>|boolean
+      imd: Opt<boolean>|boolean
+      imdisable: Opt<boolean>|boolean
+      imi: Opt<number>|number
+      iminsert: Opt<number>|number
+      ims: Opt<number>|number
+      imsearch: Opt<number>|number
+      inc: Opt<string>|string
+      inccommand: Opt<string>|string
+      include: Opt<string>|string
+      includeexpr: Opt<string>|string
+      incsearch: Opt<boolean>|boolean
+      inde: Opt<string>|string
+      indentexpr: Opt<string>|string
+      indentkeys: Opt<string>|string
+      indk: Opt<string>|string
+      inex: Opt<string>|string
+      inf: Opt<boolean>|boolean
+      infercase: Opt<boolean>|boolean
+      insertmode: Opt<boolean>|boolean
+      is: Opt<boolean>|boolean
+      isf: Opt<string>|string
+      isfname: Opt<string>|string
+      isi: Opt<string>|string
+      isident: Opt<string>|string
+      isk: Opt<string>|string
+      iskeyword: Opt<string>|string
+      isp: Opt<string>|string
+      isprint: Opt<string>|string
+      joinspaces: Opt<boolean>|boolean
+      jop: Opt<string>|string
+      js: Opt<boolean>|boolean
+      jumpoptions: Opt<string>|string
+      keymap: Opt<string>|string
+      keymodel: Opt<string>|string
+      keywordprg: Opt<string>|string
+      km: Opt<string>|string
+      kmp: Opt<string>|string
+      kp: Opt<string>|string
+      langmap: Opt<string>|string
+      langmenu: Opt<string>|string
+      langnoremap: Opt<boolean>|boolean
+      langremap: Opt<boolean>|boolean
+      laststatus: Opt<number>|number
+      lazyredraw: Opt<boolean>|boolean
+      lbr: Opt<boolean>|boolean
+      lcs: Opt<string>|string
+      linebreak: Opt<boolean>|boolean
+      lines: Opt<number>|number
+      linespace: Opt<number>|number
+      lisp: Opt<boolean>|boolean
+      lispwords: Opt<string>|string
+      list: Opt<boolean>|boolean
+      listchars: Opt<string>|string
+      lm: Opt<string>|string
+      lmap: Opt<string>|string
+      lnr: Opt<boolean>|boolean
+      loadplugins: Opt<boolean>|boolean
+      lpl: Opt<boolean>|boolean
+      lrm: Opt<boolean>|boolean
+      ls: Opt<number>|number
+      lsp: Opt<number>|number
+      lw: Opt<string>|string
+      lz: Opt<boolean>|boolean
+      ma: Opt<boolean>|boolean
+      magic: Opt<boolean>|boolean
+      makeef: Opt<string>|string
+      makeencoding: Opt<string>|string
+      makeprg: Opt<string>|string
+      mat: Opt<number>|number
+      matchpairs: Opt<string>|string
+      matchtime: Opt<number>|number
+      maxcombine: Opt<number>|number
+      maxfuncdepth: Opt<number>|number
+      maxmapdepth: Opt<number>|number
+      maxmempattern: Opt<number>|number
+      mco: Opt<number>|number
+      mef: Opt<string>|string
+      menc: Opt<string>|string
+      menuitems: Opt<number>|number
+      mfd: Opt<number>|number
+      mh: Opt<boolean>|boolean
+      mis: Opt<number>|number
+      mkspellmem: Opt<string>|string
+      ml: Opt<boolean>|boolean
+      mle: Opt<boolean>|boolean
+      mls: Opt<number>|number
+      mmd: Opt<number>|number
+      mmp: Opt<number>|number
+      mod: Opt<boolean>|boolean
+      modeline: Opt<boolean>|boolean
+      modelineexpr: Opt<boolean>|boolean
+      modelines: Opt<number>|number
+      modifiable: Opt<boolean>|boolean
+      modified: Opt<boolean>|boolean
+      more: Opt<boolean>|boolean
+      mouse: Opt<string>|string
+      mousef: Opt<boolean>|boolean
+      mousefocus: Opt<boolean>|boolean
+      mousehide: Opt<boolean>|boolean
+      mousem: Opt<string>|string
+      mousemodel: Opt<string>|string
+      mouses: Opt<string>|string
+      mouseshape: Opt<string>|string
+      mouset: Opt<number>|number
+      mousetime: Opt<number>|number
+      mp: Opt<string>|string
+      mps: Opt<string>|string
+      msm: Opt<string>|string
+      nf: Opt<string>|string
+      nrformats: Opt<string>|string
+      nu: Opt<boolean>|boolean
+      number: Opt<boolean>|boolean
+      numberwidth: Opt<number>|number
+      nuw: Opt<number>|number
+      odev: Opt<boolean>|boolean
+      ofu: Opt<string>|string
+      omnifunc: Opt<string>|string
+      opendevice: Opt<boolean>|boolean
+      operatorfunc: Opt<string>|string
+      opfunc: Opt<string>|string
+      pa: Opt<string>|string
+      packpath: Opt<string>|string
+      para: Opt<string>|string
+      paragraphs: Opt<string>|string
+      paste: Opt<boolean>|boolean
+      pastetoggle: Opt<string>|string
+      patchexpr: Opt<string>|string
+      patchmode: Opt<string>|string
+      path: Opt<string>|string
+      pb: Opt<number>|number
+      pdev: Opt<string>|string
+      penc: Opt<string>|string
+      pex: Opt<string>|string
+      pexpr: Opt<string>|string
+      pfn: Opt<string>|string
+      ph: Opt<number>|number
+      pheader: Opt<string>|string
+      pi: Opt<boolean>|boolean
+      pm: Opt<string>|string
+      pmbcs: Opt<string>|string
+      pmbfn: Opt<string>|string
+      popt: Opt<string>|string
+      pp: Opt<string>|string
+      preserveindent: Opt<boolean>|boolean
+      previewheight: Opt<number>|number
+      previewwindow: Opt<boolean>|boolean
+      printdevice: Opt<string>|string
+      printencoding: Opt<string>|string
+      printexpr: Opt<string>|string
+      printfont: Opt<string>|string
+      printheader: Opt<string>|string
+      printmbcharset: Opt<string>|string
+      printmbfont: Opt<string>|string
+      printoptions: Opt<string>|string
+      prompt: Opt<boolean>|boolean
+      pt: Opt<string>|string
+      pumblend: Opt<number>|number
+      pumheight: Opt<number>|number
+      pumwidth: Opt<number>|number
+      pvh: Opt<number>|number
+      pvw: Opt<boolean>|boolean
+      pw: Opt<number>|number
+      pyx: Opt<number>|number
+      pyxversion: Opt<number>|number
+      qe: Opt<string>|string
+      qftf: Opt<string>|string
+      quickfixtextfunc: Opt<string>|string
+      quoteescape: Opt<string>|string
+      rdb: Opt<string>|string
+      rdt: Opt<number>|number
+      re: Opt<number>|number
+      readonly: Opt<boolean>|boolean
+      redrawdebug: Opt<string>|string
+      redrawtime: Opt<number>|number
+      regexpengine: Opt<number>|number
+      relativenumber: Opt<boolean>|boolean
+      remap: Opt<boolean>|boolean
+      report: Opt<number>|number
+      revins: Opt<boolean>|boolean
+      ri: Opt<boolean>|boolean
+      rightleft: Opt<boolean>|boolean
+      rightleftcmd: Opt<string>|string
+      rl: Opt<boolean>|boolean
+      rlc: Opt<string>|string
+      rnu: Opt<boolean>|boolean
+      ro: Opt<boolean>|boolean
+      rtp: Opt<string>|string
+      ru: Opt<boolean>|boolean
+      ruf: Opt<string>|string
+      ruler: Opt<boolean>|boolean
+      rulerformat: Opt<string>|string
+      runtimepath: Opt<string>|string
+      sb: Opt<boolean>|boolean
+      sbo: Opt<string>|string
+      sbr: Opt<string>|string
+      sc: Opt<boolean>|boolean
+      scb: Opt<boolean>|boolean
+      scbk: Opt<number>|number
+      scl: Opt<string>|string
+      scr: Opt<number>|number
+      scroll: Opt<number>|number
+      scrollback: Opt<number>|number
+      scrollbind: Opt<boolean>|boolean
+      scrolljump: Opt<number>|number
+      scrolloff: Opt<number>|number
+      scrollopt: Opt<string>|string
+      scs: Opt<boolean>|boolean
+      sd: Opt<string>|string
+      sdf: Opt<string>|string
+      sect: Opt<string>|string
+      sections: Opt<string>|string
+      secure: Opt<boolean>|boolean
+      sel: Opt<string>|string
+      selection: Opt<string>|string
+      selectmode: Opt<string>|string
+      sessionoptions: Opt<string>|string
+      sft: Opt<boolean>|boolean
+      sh: Opt<string>|string
+      shada: Opt<string>|string
+      shadafile: Opt<string>|string
+      shcf: Opt<string>|string
+      shell: Opt<string>|string
+      shellcmdflag: Opt<string>|string
+      shellpipe: Opt<string>|string
+      shellquote: Opt<string>|string
+      shellredir: Opt<string>|string
+      shellslash: Opt<boolean>|boolean
+      shelltemp: Opt<boolean>|boolean
+      shellxescape: Opt<string>|string
+      shellxquote: Opt<string>|string
+      shiftround: Opt<boolean>|boolean
+      shiftwidth: Opt<number>|number
+      shm: Opt<string>|string
+      shortmess: Opt<string>|string
+      showbreak: Opt<string>|string
+      showcmd: Opt<boolean>|boolean
+      showfulltag: Opt<boolean>|boolean
+      showmatch: Opt<boolean>|boolean
+      showmode: Opt<boolean>|boolean
+      showtabline: Opt<number>|number
+      shq: Opt<string>|string
+      si: Opt<boolean>|boolean
+      sidescroll: Opt<number>|number
+      sidescrolloff: Opt<number>|number
+      signcolumn: Opt<string>|string
+      siso: Opt<number>|number
+      sj: Opt<number>|number
+      slm: Opt<string>|string
+      sm: Opt<boolean>|boolean
+      smartcase: Opt<boolean>|boolean
+      smartindent: Opt<boolean>|boolean
+      smarttab: Opt<boolean>|boolean
+      smc: Opt<number>|number
+      smd: Opt<boolean>|boolean
+      so: Opt<number>|number
+      softtabstop: Opt<number>|number
+      sol: Opt<boolean>|boolean
+      sp: Opt<string>|string
+      spc: Opt<string>|string
+      spell: Opt<boolean>|boolean
+      spellcapcheck: Opt<string>|string
+      spellfile: Opt<string>|string
+      spelllang: Opt<string>|string
+      spelloptions: Opt<string>|string
+      spellsuggest: Opt<string>|string
+      spf: Opt<string>|string
+      spl: Opt<string>|string
+      splitbelow: Opt<boolean>|boolean
+      splitright: Opt<boolean>|boolean
+      spo: Opt<string>|string
+      spr: Opt<boolean>|boolean
+      sps: Opt<string>|string
+      sr: Opt<boolean>|boolean
+      srr: Opt<string>|string
+      ss: Opt<number>|number
+      ssl: Opt<boolean>|boolean
+      ssop: Opt<string>|string
+      sta: Opt<boolean>|boolean
+      stal: Opt<number>|number
+      startofline: Opt<boolean>|boolean
+      statusline: Opt<string>|string
+      stl: Opt<string>|string
+      stmp: Opt<boolean>|boolean
+      sts: Opt<number>|number
+      su: Opt<string>|string
+      sua: Opt<string>|string
+      suffixes: Opt<string>|string
+      suffixesadd: Opt<string>|string
+      sw: Opt<number>|number
+      swapfile: Opt<boolean>|boolean
+      swb: Opt<string>|string
+      swf: Opt<boolean>|boolean
+      switchbuf: Opt<string>|string
+      sxe: Opt<string>|string
+      sxq: Opt<string>|string
+      syn: Opt<string>|string
+      synmaxcol: Opt<number>|number
+      syntax: Opt<string>|string
+      tabline: Opt<string>|string
+      tabpagemax: Opt<number>|number
+      tabstop: Opt<number>|number
+      tag: Opt<string>|string
+      tagbsearch: Opt<boolean>|boolean
+      tagcase: Opt<string>|string
+      tagfunc: Opt<string>|string
+      taglength: Opt<number>|number
+      tagrelative: Opt<boolean>|boolean
+      tags: Opt<string>|string
+      tagstack: Opt<boolean>|boolean
+      tal: Opt<string>|string
+      tbidi: Opt<boolean>|boolean
+      tbs: Opt<boolean>|boolean
+      tc: Opt<string>|string
+      tenc: Opt<string>|string
+      termbidi: Opt<boolean>|boolean
+      termencoding: Opt<string>|string
+      termguicolors: Opt<boolean>|boolean
+      termpastefilter: Opt<string>|string
+      terse: Opt<boolean>|boolean
+      textwidth: Opt<number>|number
+      tf: Opt<boolean>|boolean
+      tfu: Opt<string>|string
+      tgc: Opt<boolean>|boolean
+      tgst: Opt<boolean>|boolean
+      thesaurus: Opt<string>|string
+      thesaurusfunc: Opt<string>|string
+      tildeop: Opt<boolean>|boolean
+      timeout: Opt<boolean>|boolean
+      timeoutlen: Opt<number>|number
+      title: Opt<boolean>|boolean
+      titlelen: Opt<number>|number
+      titleold: Opt<string>|string
+      titlestring: Opt<string>|string
+      tl: Opt<number>|number
+      tm: Opt<number>|number
+      to: Opt<boolean>|boolean
+      top: Opt<boolean>|boolean
+      tpf: Opt<string>|string
+      tpm: Opt<number>|number
+      tr: Opt<boolean>|boolean
+      ts: Opt<number>|number
+      tsr: Opt<string>|string
+      tsrfu: Opt<string>|string
+      ttimeout: Opt<boolean>|boolean
+      ttimeoutlen: Opt<number>|number
+      ttm: Opt<number>|number
+      ttyfast: Opt<boolean>|boolean
+      tw: Opt<number>|number
+      uc: Opt<number>|number
+      udf: Opt<boolean>|boolean
+      udir: Opt<string>|string
+      ul: Opt<number>|number
+      undodir: Opt<string>|string
+      undofile: Opt<boolean>|boolean
+      undolevels: Opt<number>|number
+      undoreload: Opt<number>|number
+      updatecount: Opt<number>|number
+      updatetime: Opt<number>|number
+      ur: Opt<number>|number
+      ut: Opt<number>|number
+      varsofttabstop: Opt<string>|string
+      vartabstop: Opt<string>|string
+      vb: Opt<boolean>|boolean
+      vbs: Opt<number>|number
+      vdir: Opt<string>|string
+      ve: Opt<string>|string
+      verbose: Opt<number>|number
+      verbosefile: Opt<string>|string
+      vfile: Opt<string>|string
+      vi: Opt<string>|string
+      viewdir: Opt<string>|string
+      viewoptions: Opt<string>|string
+      vif: Opt<string>|string
+      viminfo: Opt<string>|string
+      viminfofile: Opt<string>|string
+      virtualedit: Opt<string>|string
+      visualbell: Opt<boolean>|boolean
+      vop: Opt<string>|string
+      vsts: Opt<string>|string
+      vts: Opt<string>|string
+      wa: Opt<boolean>|boolean
+      wak: Opt<string>|string
+      warn: Opt<boolean>|boolean
+      wb: Opt<boolean>|boolean
+      wc: Opt<number>|number
+      wcm: Opt<number>|number
+      wd: Opt<number>|number
+      wfh: Opt<boolean>|boolean
+      wfw: Opt<boolean>|boolean
+      wh: Opt<number>|number
+      whichwrap: Opt<string>|string
+      wi: Opt<number>|number
+      wic: Opt<boolean>|boolean
+      wig: Opt<string>|string
+      wildchar: Opt<number>|number
+      wildcharm: Opt<number>|number
+      wildignore: Opt<string>|string
+      wildignorecase: Opt<boolean>|boolean
+      wildmenu: Opt<boolean>|boolean
+      wildmode: Opt<string>|string
+      wildoptions: Opt<string>|string
+      wim: Opt<string>|string
+      winaltkeys: Opt<string>|string
+      winbl: Opt<number>|number
+      winblend: Opt<number>|number
+      window: Opt<number>|number
+      winfixheight: Opt<boolean>|boolean
+      winfixwidth: Opt<boolean>|boolean
+      winheight: Opt<number>|number
+      winhighlight: Opt<string>|string
+      winhl: Opt<string>|string
+      winminheight: Opt<number>|number
+      winminwidth: Opt<number>|number
+      winwidth: Opt<number>|number
+      wiw: Opt<number>|number
+      wm: Opt<number>|number
+      wmh: Opt<number>|number
+      wmnu: Opt<boolean>|boolean
+      wmw: Opt<number>|number
+      wop: Opt<string>|string
+      wrap: Opt<boolean>|boolean
+      wrapmargin: Opt<number>|number
+      wrapscan: Opt<boolean>|boolean
+      write: Opt<boolean>|boolean
+      writeany: Opt<boolean>|boolean
+      writebackup: Opt<boolean>|boolean
+      writedelay: Opt<number>|number
+      ws: Opt<boolean>|boolean
+      ww: Opt<string>|string
+   end
+   opt_local: opt
+   opt_global: opt
 
-  gsplit: function(string, string, boolean): function(): string
+   g: {string:any}
+   t: {string:any}
+   v: {string:any}
+   b: {string:any}
+   w: {string:any}
+   env: {string:any}
 
-  pesc: function(string): string
+   record AllOptions
+      acd: boolean
+      ai: boolean
+      al: number
+      aleph: number
+      allowrevins: boolean
+      ambiwidth: string
+      ambw: string
+      ar: boolean
+      arab: boolean
+      arabic: boolean
+      arabicshape: boolean
+      ari: boolean
+      arshape: boolean
+      autochdir: boolean
+      autoindent: boolean
+      autoread: boolean
+      autowrite: boolean
+      autowriteall: boolean
+      aw: boolean
+      awa: boolean
+      background: string
+      backspace: string
+      backup: boolean
+      backupcopy: string
+      backupdir: string
+      backupext: string
+      backupskip: string
+      bdir: string
+      belloff: string
+      bex: string
+      bg: string
+      bh: string
+      bin: boolean
+      binary: boolean
+      bk: boolean
+      bkc: string
+      bl: boolean
+      bo: string
+      bomb: boolean
+      breakat: string
+      breakindent: boolean
+      breakindentopt: string
+      bri: boolean
+      briopt: string
+      brk: string
+      browsedir: string
+      bs: string
+      bsdir: string
+      bsk: string
+      bt: string
+      bufhidden: string
+      buflisted: boolean
+      buftype: string
+      casemap: string
+      cb: string
+      cc: string
+      ccv: string
+      cd: string
+      cdh: boolean
+      cdhome: boolean
+      cdpath: string
+      cedit: string
+      cf: boolean
+      cfu: string
+      ch: number
+      channel: number
+      charconvert: string
+      ci: boolean
+      cin: boolean
+      cindent: boolean
+      cink: string
+      cinkeys: string
+      cino: string
+      cinoptions: string
+      cinscopedecls: string
+      cinsd: string
+      cinw: string
+      cinwords: string
+      clipboard: string
+      cmdheight: number
+      cmdwinheight: number
+      cmp: string
+      cms: string
+      co: number
+      cocu: string
+      cole: number
+      colorcolumn: string
+      columns: number
+      com: string
+      comments: string
+      commentstring: string
+      compatible: boolean
+      complete: string
+      completefunc: string
+      completeopt: string
+      completeslash: string
+      concealcursor: string
+      conceallevel: number
+      confirm: boolean
+      copyindent: boolean
+      cot: string
+      cp: boolean
+      cpo: string
+      cpoptions: string
+      cpt: string
+      crb: boolean
+      cscopepathcomp: number
+      cscopeprg: string
+      cscopequickfix: string
+      cscoperelative: boolean
+      cscopetag: boolean
+      cscopetagorder: number
+      cscopeverbose: boolean
+      csl: string
+      cspc: number
+      csprg: string
+      csqf: string
+      csre: boolean
+      cst: boolean
+      csto: number
+      csverb: boolean
+      cuc: boolean
+      cul: boolean
+      culopt: string
+      cursorbind: boolean
+      cursorcolumn: boolean
+      cursorline: boolean
+      cursorlineopt: string
+      cwh: number
+      debug: string
+      deco: boolean
+      def: string
+      define: string
+      delcombine: boolean
+      dex: string
+      dg: boolean
+      dict: string
+      dictionary: string
+      diff: boolean
+      diffexpr: string
+      diffopt: string
+      digraph: boolean
+      dip: string
+      dir: string
+      directory: string
+      display: string
+      dy: string
+      ea: boolean
+      ead: string
+      eadirection: string
+      eb: boolean
+      ed: boolean
+      edcompatible: boolean
+      ef: string
+      efm: string
+      ei: string
+      emo: boolean
+      emoji: boolean
+      enc: string
+      encoding: string
+      endofline: boolean
+      eol: boolean
+      ep: string
+      equalalways: boolean
+      equalprg: string
+      errorbells: boolean
+      errorfile: string
+      errorformat: string
+      et: boolean
+      eventignore: string
+      ex: boolean
+      expandtab: boolean
+      exrc: boolean
+      fcl: string
+      fcs: string
+      fdc: string
+      fde: string
+      fdi: string
+      fdl: number
+      fdls: number
+      fdm: string
+      fdn: number
+      fdo: string
+      fdt: string
+      fen: boolean
+      fenc: string
+      fencs: string
+      fex: string
+      ff: string
+      ffs: string
+      fic: boolean
+      fileencoding: string
+      fileencodings: string
+      fileformat: string
+      fileformats: string
+      fileignorecase: boolean
+      filetype: string
+      fillchars: string
+      fixendofline: boolean
+      fixeol: boolean
+      flp: string
+      fml: number
+      fmr: string
+      fo: string
+      foldclose: string
+      foldcolumn: string
+      foldenable: boolean
+      foldexpr: string
+      foldignore: string
+      foldlevel: number
+      foldlevelstart: number
+      foldmarker: string
+      foldmethod: string
+      foldminlines: number
+      foldnestmax: number
+      foldopen: string
+      foldtext: string
+      formatexpr: string
+      formatlistpat: string
+      formatoptions: string
+      formatprg: string
+      fp: string
+      fs: boolean
+      fsync: boolean
+      ft: string
+      gcr: string
+      gd: boolean
+      gdefault: boolean
+      gfm: string
+      gfn: string
+      gfw: string
+      go: string
+      gp: string
+      grepformat: string
+      grepprg: string
+      gtl: string
+      gtt: string
+      guicursor: string
+      guifont: string
+      guifontwide: string
+      guioptions: string
+      guitablabel: string
+      guitabtooltip: string
+      helpfile: string
+      helpheight: number
+      helplang: string
+      hf: string
+      hh: number
+      hi: number
+      hid: boolean
+      hidden: boolean
+      highlight: string
+      history: number
+      hk: boolean
+      hkmap: boolean
+      hkmapp: boolean
+      hkp: boolean
+      hl: string
+      hlg: string
+      hls: boolean
+      hlsearch: boolean
+      ic: boolean
+      icm: string
+      icon: boolean
+      iconstring: string
+      ignorecase: boolean
+      im: boolean
+      imc: boolean
+      imcmdline: boolean
+      imd: boolean
+      imdisable: boolean
+      imi: number
+      iminsert: number
+      ims: number
+      imsearch: number
+      inc: string
+      inccommand: string
+      include: string
+      includeexpr: string
+      incsearch: boolean
+      inde: string
+      indentexpr: string
+      indentkeys: string
+      indk: string
+      inex: string
+      inf: boolean
+      infercase: boolean
+      insertmode: boolean
+      is: boolean
+      isf: string
+      isfname: string
+      isi: string
+      isident: string
+      isk: string
+      iskeyword: string
+      isp: string
+      isprint: string
+      joinspaces: boolean
+      jop: string
+      js: boolean
+      jumpoptions: string
+      keymap: string
+      keymodel: string
+      keywordprg: string
+      km: string
+      kmp: string
+      kp: string
+      langmap: string
+      langmenu: string
+      langnoremap: boolean
+      langremap: boolean
+      laststatus: number
+      lazyredraw: boolean
+      lbr: boolean
+      lcs: string
+      linebreak: boolean
+      lines: number
+      linespace: number
+      lisp: boolean
+      lispwords: string
+      list: boolean
+      listchars: string
+      lm: string
+      lmap: string
+      lnr: boolean
+      loadplugins: boolean
+      lpl: boolean
+      lrm: boolean
+      ls: number
+      lsp: number
+      lw: string
+      lz: boolean
+      ma: boolean
+      magic: boolean
+      makeef: string
+      makeencoding: string
+      makeprg: string
+      mat: number
+      matchpairs: string
+      matchtime: number
+      maxcombine: number
+      maxfuncdepth: number
+      maxmapdepth: number
+      maxmempattern: number
+      mco: number
+      mef: string
+      menc: string
+      menuitems: number
+      mfd: number
+      mh: boolean
+      mis: number
+      mkspellmem: string
+      ml: boolean
+      mle: boolean
+      mls: number
+      mmd: number
+      mmp: number
+      mod: boolean
+      modeline: boolean
+      modelineexpr: boolean
+      modelines: number
+      modifiable: boolean
+      modified: boolean
+      more: boolean
+      mouse: string
+      mousef: boolean
+      mousefocus: boolean
+      mousehide: boolean
+      mousem: string
+      mousemodel: string
+      mouses: string
+      mouseshape: string
+      mouset: number
+      mousetime: number
+      mp: string
+      mps: string
+      msm: string
+      nf: string
+      nrformats: string
+      nu: boolean
+      number: boolean
+      numberwidth: number
+      nuw: number
+      odev: boolean
+      ofu: string
+      omnifunc: string
+      opendevice: boolean
+      operatorfunc: string
+      opfunc: string
+      pa: string
+      packpath: string
+      para: string
+      paragraphs: string
+      paste: boolean
+      pastetoggle: string
+      patchexpr: string
+      patchmode: string
+      path: string
+      pb: number
+      pdev: string
+      penc: string
+      pex: string
+      pexpr: string
+      pfn: string
+      ph: number
+      pheader: string
+      pi: boolean
+      pm: string
+      pmbcs: string
+      pmbfn: string
+      popt: string
+      pp: string
+      preserveindent: boolean
+      previewheight: number
+      previewwindow: boolean
+      printdevice: string
+      printencoding: string
+      printexpr: string
+      printfont: string
+      printheader: string
+      printmbcharset: string
+      printmbfont: string
+      printoptions: string
+      prompt: boolean
+      pt: string
+      pumblend: number
+      pumheight: number
+      pumwidth: number
+      pvh: number
+      pvw: boolean
+      pw: number
+      pyx: number
+      pyxversion: number
+      qe: string
+      qftf: string
+      quickfixtextfunc: string
+      quoteescape: string
+      rdb: string
+      rdt: number
+      re: number
+      readonly: boolean
+      redrawdebug: string
+      redrawtime: number
+      regexpengine: number
+      relativenumber: boolean
+      remap: boolean
+      report: number
+      revins: boolean
+      ri: boolean
+      rightleft: boolean
+      rightleftcmd: string
+      rl: boolean
+      rlc: string
+      rnu: boolean
+      ro: boolean
+      rtp: string
+      ru: boolean
+      ruf: string
+      ruler: boolean
+      rulerformat: string
+      runtimepath: string
+      sb: boolean
+      sbo: string
+      sbr: string
+      sc: boolean
+      scb: boolean
+      scbk: number
+      scl: string
+      scr: number
+      scroll: number
+      scrollback: number
+      scrollbind: boolean
+      scrolljump: number
+      scrolloff: number
+      scrollopt: string
+      scs: boolean
+      sd: string
+      sdf: string
+      sect: string
+      sections: string
+      secure: boolean
+      sel: string
+      selection: string
+      selectmode: string
+      sessionoptions: string
+      sft: boolean
+      sh: string
+      shada: string
+      shadafile: string
+      shcf: string
+      shell: string
+      shellcmdflag: string
+      shellpipe: string
+      shellquote: string
+      shellredir: string
+      shellslash: boolean
+      shelltemp: boolean
+      shellxescape: string
+      shellxquote: string
+      shiftround: boolean
+      shiftwidth: number
+      shm: string
+      shortmess: string
+      showbreak: string
+      showcmd: boolean
+      showfulltag: boolean
+      showmatch: boolean
+      showmode: boolean
+      showtabline: number
+      shq: string
+      si: boolean
+      sidescroll: number
+      sidescrolloff: number
+      signcolumn: string
+      siso: number
+      sj: number
+      slm: string
+      sm: boolean
+      smartcase: boolean
+      smartindent: boolean
+      smarttab: boolean
+      smc: number
+      smd: boolean
+      so: number
+      softtabstop: number
+      sol: boolean
+      sp: string
+      spc: string
+      spell: boolean
+      spellcapcheck: string
+      spellfile: string
+      spelllang: string
+      spelloptions: string
+      spellsuggest: string
+      spf: string
+      spl: string
+      splitbelow: boolean
+      splitright: boolean
+      spo: string
+      spr: boolean
+      sps: string
+      sr: boolean
+      srr: string
+      ss: number
+      ssl: boolean
+      ssop: string
+      sta: boolean
+      stal: number
+      startofline: boolean
+      statusline: string
+      stl: string
+      stmp: boolean
+      sts: number
+      su: string
+      sua: string
+      suffixes: string
+      suffixesadd: string
+      sw: number
+      swapfile: boolean
+      swb: string
+      swf: boolean
+      switchbuf: string
+      sxe: string
+      sxq: string
+      syn: string
+      synmaxcol: number
+      syntax: string
+      tabline: string
+      tabpagemax: number
+      tabstop: number
+      tag: string
+      tagbsearch: boolean
+      tagcase: string
+      tagfunc: string
+      taglength: number
+      tagrelative: boolean
+      tags: string
+      tagstack: boolean
+      tal: string
+      tbidi: boolean
+      tbs: boolean
+      tc: string
+      tenc: string
+      termbidi: boolean
+      termencoding: string
+      termguicolors: boolean
+      termpastefilter: string
+      terse: boolean
+      textwidth: number
+      tf: boolean
+      tfu: string
+      tgc: boolean
+      tgst: boolean
+      thesaurus: string
+      thesaurusfunc: string
+      tildeop: boolean
+      timeout: boolean
+      timeoutlen: number
+      title: boolean
+      titlelen: number
+      titleold: string
+      titlestring: string
+      tl: number
+      tm: number
+      to: boolean
+      top: boolean
+      tpf: string
+      tpm: number
+      tr: boolean
+      ts: number
+      tsr: string
+      tsrfu: string
+      ttimeout: boolean
+      ttimeoutlen: number
+      ttm: number
+      ttyfast: boolean
+      tw: number
+      uc: number
+      udf: boolean
+      udir: string
+      ul: number
+      undodir: string
+      undofile: boolean
+      undolevels: number
+      undoreload: number
+      updatecount: number
+      updatetime: number
+      ur: number
+      ut: number
+      varsofttabstop: string
+      vartabstop: string
+      vb: boolean
+      vbs: number
+      vdir: string
+      ve: string
+      verbose: number
+      verbosefile: string
+      vfile: string
+      vi: string
+      viewdir: string
+      viewoptions: string
+      vif: string
+      viminfo: string
+      viminfofile: string
+      virtualedit: string
+      visualbell: boolean
+      vop: string
+      vsts: string
+      vts: string
+      wa: boolean
+      wak: string
+      warn: boolean
+      wb: boolean
+      wc: number
+      wcm: number
+      wd: number
+      wfh: boolean
+      wfw: boolean
+      wh: number
+      whichwrap: string
+      wi: number
+      wic: boolean
+      wig: string
+      wildchar: number
+      wildcharm: number
+      wildignore: string
+      wildignorecase: boolean
+      wildmenu: boolean
+      wildmode: string
+      wildoptions: string
+      wim: string
+      winaltkeys: string
+      winbl: number
+      winblend: number
+      window: number
+      winfixheight: boolean
+      winfixwidth: boolean
+      winheight: number
+      winhighlight: string
+      winhl: string
+      winminheight: number
+      winminwidth: number
+      winwidth: number
+      wiw: number
+      wm: number
+      wmh: number
+      wmnu: boolean
+      wmw: number
+      wop: string
+      wrap: boolean
+      wrapmargin: number
+      wrapscan: boolean
+      write: boolean
+      writeany: boolean
+      writebackup: boolean
+      writedelay: number
+      ws: boolean
+      ww: string
+   end
+   o: AllOptions
 
-  startswith: function(string, string): boolean
-  endswith: function(string, string): boolean
+   record GlobalOptions
+      acd: boolean
+      al: number
+      aleph: number
+      allowrevins: boolean
+      ambiwidth: string
+      ambw: string
+      arabicshape: boolean
+      ari: boolean
+      arshape: boolean
+      autochdir: boolean
+      autowrite: boolean
+      autowriteall: boolean
+      aw: boolean
+      awa: boolean
+      background: string
+      backspace: string
+      backup: boolean
+      backupdir: string
+      backupext: string
+      backupskip: string
+      bdir: string
+      belloff: string
+      bex: string
+      bg: string
+      bk: boolean
+      bo: string
+      breakat: string
+      brk: string
+      browsedir: string
+      bs: string
+      bsdir: string
+      bsk: string
+      casemap: string
+      cb: string
+      ccv: string
+      cd: string
+      cdh: boolean
+      cdhome: boolean
+      cdpath: string
+      cedit: string
+      cf: boolean
+      ch: number
+      charconvert: string
+      clipboard: string
+      cmdheight: number
+      cmdwinheight: number
+      cmp: string
+      co: number
+      columns: number
+      compatible: boolean
+      completeopt: string
+      completeslash: string
+      confirm: boolean
+      cot: string
+      cp: boolean
+      cpo: string
+      cpoptions: string
+      cscopepathcomp: number
+      cscopeprg: string
+      cscopequickfix: string
+      cscoperelative: boolean
+      cscopetag: boolean
+      cscopetagorder: number
+      cscopeverbose: boolean
+      csl: string
+      cspc: number
+      csprg: string
+      csqf: string
+      csre: boolean
+      cst: boolean
+      csto: number
+      csverb: boolean
+      cwh: number
+      debug: string
+      deco: boolean
+      delcombine: boolean
+      dex: string
+      dg: boolean
+      diffexpr: string
+      diffopt: string
+      digraph: boolean
+      dip: string
+      dir: string
+      directory: string
+      display: string
+      dy: string
+      ea: boolean
+      ead: string
+      eadirection: string
+      eb: boolean
+      ed: boolean
+      edcompatible: boolean
+      ef: string
+      ei: string
+      emo: boolean
+      emoji: boolean
+      enc: string
+      encoding: string
+      equalalways: boolean
+      errorbells: boolean
+      errorfile: string
+      eventignore: string
+      ex: boolean
+      exrc: boolean
+      fcl: string
+      fdls: number
+      fdo: string
+      fencs: string
+      ffs: string
+      fic: boolean
+      fileencodings: string
+      fileformats: string
+      fileignorecase: boolean
+      foldclose: string
+      foldlevelstart: number
+      foldopen: string
+      fs: boolean
+      fsync: boolean
+      gcr: string
+      gd: boolean
+      gdefault: boolean
+      gfm: string
+      gfn: string
+      gfw: string
+      go: string
+      grepformat: string
+      gtl: string
+      gtt: string
+      guicursor: string
+      guifont: string
+      guifontwide: string
+      guioptions: string
+      guitablabel: string
+      guitabtooltip: string
+      helpfile: string
+      helpheight: number
+      helplang: string
+      hf: string
+      hh: number
+      hi: number
+      hid: boolean
+      hidden: boolean
+      highlight: string
+      history: number
+      hk: boolean
+      hkmap: boolean
+      hkmapp: boolean
+      hkp: boolean
+      hl: string
+      hlg: string
+      hls: boolean
+      hlsearch: boolean
+      ic: boolean
+      icm: string
+      icon: boolean
+      iconstring: string
+      ignorecase: boolean
+      im: boolean
+      imc: boolean
+      imcmdline: boolean
+      imd: boolean
+      imdisable: boolean
+      inccommand: string
+      incsearch: boolean
+      insertmode: boolean
+      is: boolean
+      isf: string
+      isfname: string
+      isi: string
+      isident: string
+      isp: string
+      isprint: string
+      joinspaces: boolean
+      jop: string
+      js: boolean
+      jumpoptions: string
+      keymodel: string
+      km: string
+      langmap: string
+      langmenu: string
+      langnoremap: boolean
+      langremap: boolean
+      laststatus: number
+      lazyredraw: boolean
+      lines: number
+      linespace: number
+      lm: string
+      lmap: string
+      lnr: boolean
+      loadplugins: boolean
+      lpl: boolean
+      lrm: boolean
+      ls: number
+      lsp: number
+      lz: boolean
+      magic: boolean
+      makeef: string
+      mat: number
+      matchtime: number
+      maxcombine: number
+      maxfuncdepth: number
+      maxmapdepth: number
+      maxmempattern: number
+      mco: number
+      mef: string
+      menuitems: number
+      mfd: number
+      mh: boolean
+      mis: number
+      mkspellmem: string
+      mle: boolean
+      mls: number
+      mmd: number
+      mmp: number
+      modelineexpr: boolean
+      modelines: number
+      more: boolean
+      mouse: string
+      mousef: boolean
+      mousefocus: boolean
+      mousehide: boolean
+      mousem: string
+      mousemodel: string
+      mouses: string
+      mouseshape: string
+      mouset: number
+      mousetime: number
+      msm: string
+      odev: boolean
+      opendevice: boolean
+      operatorfunc: string
+      opfunc: string
+      packpath: string
+      para: string
+      paragraphs: string
+      paste: boolean
+      pastetoggle: string
+      patchexpr: string
+      patchmode: string
+      pb: number
+      pdev: string
+      penc: string
+      pex: string
+      pexpr: string
+      pfn: string
+      ph: number
+      pheader: string
+      pm: string
+      pmbcs: string
+      pmbfn: string
+      popt: string
+      pp: string
+      previewheight: number
+      printdevice: string
+      printencoding: string
+      printexpr: string
+      printfont: string
+      printheader: string
+      printmbcharset: string
+      printmbfont: string
+      printoptions: string
+      prompt: boolean
+      pt: string
+      pumblend: number
+      pumheight: number
+      pumwidth: number
+      pvh: number
+      pw: number
+      pyx: number
+      pyxversion: number
+      qftf: string
+      quickfixtextfunc: string
+      rdb: string
+      rdt: number
+      re: number
+      redrawdebug: string
+      redrawtime: number
+      regexpengine: number
+      remap: boolean
+      report: number
+      revins: boolean
+      ri: boolean
+      rtp: string
+      ru: boolean
+      ruf: string
+      ruler: boolean
+      rulerformat: string
+      runtimepath: string
+      sb: boolean
+      sbo: string
+      sc: boolean
+      scrolljump: number
+      scrollopt: string
+      scs: boolean
+      sd: string
+      sdf: string
+      sect: string
+      sections: string
+      secure: boolean
+      sel: string
+      selection: string
+      selectmode: string
+      sessionoptions: string
+      sft: boolean
+      sh: string
+      shada: string
+      shadafile: string
+      shcf: string
+      shell: string
+      shellcmdflag: string
+      shellpipe: string
+      shellquote: string
+      shellredir: string
+      shellslash: boolean
+      shelltemp: boolean
+      shellxescape: string
+      shellxquote: string
+      shiftround: boolean
+      shm: string
+      shortmess: string
+      showcmd: boolean
+      showfulltag: boolean
+      showmatch: boolean
+      showmode: boolean
+      showtabline: number
+      shq: string
+      sidescroll: number
+      sj: number
+      slm: string
+      sm: boolean
+      smartcase: boolean
+      smarttab: boolean
+      smd: boolean
+      sol: boolean
+      sp: string
+      spellsuggest: string
+      splitbelow: boolean
+      splitright: boolean
+      spr: boolean
+      sps: string
+      sr: boolean
+      srr: string
+      ss: number
+      ssl: boolean
+      ssop: string
+      sta: boolean
+      stal: number
+      startofline: boolean
+      stmp: boolean
+      su: string
+      suffixes: string
+      swb: string
+      switchbuf: string
+      sxe: string
+      sxq: string
+      tabline: string
+      tabpagemax: number
+      tagbsearch: boolean
+      taglength: number
+      tagrelative: boolean
+      tagstack: boolean
+      tal: string
+      tbidi: boolean
+      tbs: boolean
+      tenc: string
+      termbidi: boolean
+      termencoding: string
+      termguicolors: boolean
+      termpastefilter: string
+      terse: boolean
+      tf: boolean
+      tgc: boolean
+      tgst: boolean
+      tildeop: boolean
+      timeout: boolean
+      timeoutlen: number
+      title: boolean
+      titlelen: number
+      titleold: string
+      titlestring: string
+      tl: number
+      tm: number
+      to: boolean
+      top: boolean
+      tpf: string
+      tpm: number
+      tr: boolean
+      ttimeout: boolean
+      ttimeoutlen: number
+      ttm: number
+      ttyfast: boolean
+      uc: number
+      udir: string
+      undodir: string
+      undoreload: number
+      updatecount: number
+      updatetime: number
+      ur: number
+      ut: number
+      vb: boolean
+      vbs: number
+      vdir: string
+      verbose: number
+      verbosefile: string
+      vfile: string
+      vi: string
+      viewdir: string
+      viewoptions: string
+      vif: string
+      viminfo: string
+      viminfofile: string
+      visualbell: boolean
+      vop: string
+      wa: boolean
+      wak: string
+      warn: boolean
+      wb: boolean
+      wc: number
+      wcm: number
+      wd: number
+      wh: number
+      whichwrap: string
+      wi: number
+      wic: boolean
+      wig: string
+      wildchar: number
+      wildcharm: number
+      wildignore: string
+      wildignorecase: boolean
+      wildmenu: boolean
+      wildmode: string
+      wildoptions: string
+      wim: string
+      winaltkeys: string
+      window: number
+      winheight: number
+      winminheight: number
+      winminwidth: number
+      winwidth: number
+      wiw: number
+      wmh: number
+      wmnu: boolean
+      wmw: number
+      wop: string
+      wrapscan: boolean
+      write: boolean
+      writeany: boolean
+      writebackup: boolean
+      writedelay: number
+      ws: boolean
+      ww: string
+   end
+   go: GlobalOptions
 
-  schedule_wrap: function(function()): function()
-  schedule_wrap: function(function(...:any): any...): function(...:any): any...
+   record BufferOptions
+      ai: boolean
+      ar: boolean
+      autoindent: boolean
+      autoread: boolean
+      backupcopy: string
+      bh: string
+      bin: boolean
+      binary: boolean
+      bkc: string
+      bl: boolean
+      bomb: boolean
+      bt: string
+      bufhidden: string
+      buflisted: boolean
+      buftype: string
+      cfu: string
+      channel: number
+      ci: boolean
+      cin: boolean
+      cindent: boolean
+      cink: string
+      cinkeys: string
+      cino: string
+      cinoptions: string
+      cinscopedecls: string
+      cinsd: string
+      cinw: string
+      cinwords: string
+      cms: string
+      com: string
+      comments: string
+      commentstring: string
+      complete: string
+      completefunc: string
+      copyindent: boolean
+      cpt: string
+      def: string
+      define: string
+      dict: string
+      dictionary: string
+      efm: string
+      endofline: boolean
+      eol: boolean
+      ep: string
+      equalprg: string
+      errorformat: string
+      et: boolean
+      expandtab: boolean
+      fenc: string
+      fex: string
+      ff: string
+      fileencoding: string
+      fileformat: string
+      filetype: string
+      fixendofline: boolean
+      fixeol: boolean
+      flp: string
+      fo: string
+      formatexpr: string
+      formatlistpat: string
+      formatoptions: string
+      formatprg: string
+      fp: string
+      ft: string
+      gp: string
+      grepprg: string
+      imi: number
+      iminsert: number
+      ims: number
+      imsearch: number
+      inc: string
+      include: string
+      includeexpr: string
+      inde: string
+      indentexpr: string
+      indentkeys: string
+      indk: string
+      inex: string
+      inf: boolean
+      infercase: boolean
+      isk: string
+      iskeyword: string
+      keymap: string
+      keywordprg: string
+      kmp: string
+      kp: string
+      lisp: boolean
+      lispwords: string
+      lw: string
+      ma: boolean
+      makeencoding: string
+      makeprg: string
+      matchpairs: string
+      menc: string
+      ml: boolean
+      mod: boolean
+      modeline: boolean
+      modifiable: boolean
+      modified: boolean
+      mp: string
+      mps: string
+      nf: string
+      nrformats: string
+      ofu: string
+      omnifunc: string
+      pa: string
+      path: string
+      pi: boolean
+      preserveindent: boolean
+      qe: string
+      quoteescape: string
+      readonly: boolean
+      ro: boolean
+      scbk: number
+      scrollback: number
+      shiftwidth: number
+      si: boolean
+      smartindent: boolean
+      smc: number
+      softtabstop: number
+      spc: string
+      spellcapcheck: string
+      spellfile: string
+      spelllang: string
+      spelloptions: string
+      spf: string
+      spl: string
+      spo: string
+      sts: number
+      sua: string
+      suffixesadd: string
+      sw: number
+      swapfile: boolean
+      swf: boolean
+      syn: string
+      synmaxcol: number
+      syntax: string
+      tabstop: number
+      tag: string
+      tagcase: string
+      tagfunc: string
+      tags: string
+      tc: string
+      textwidth: number
+      tfu: string
+      thesaurus: string
+      thesaurusfunc: string
+      ts: number
+      tsr: string
+      tsrfu: string
+      tw: number
+      udf: boolean
+      ul: number
+      undofile: boolean
+      undolevels: number
+      varsofttabstop: string
+      vartabstop: string
+      vsts: string
+      vts: string
+      wm: number
+      wrapmargin: number
+   end
+   bo: BufferOptions
 
-  schedule: function(function)
-  validate: function({string:{any}})
-  trim: function(string): string
+   record WindowOptions
+      arab: boolean
+      arabic: boolean
+      breakindent: boolean
+      breakindentopt: string
+      bri: boolean
+      briopt: string
+      cc: string
+      cocu: string
+      cole: number
+      colorcolumn: string
+      concealcursor: string
+      conceallevel: number
+      crb: boolean
+      cuc: boolean
+      cul: boolean
+      culopt: string
+      cursorbind: boolean
+      cursorcolumn: boolean
+      cursorline: boolean
+      cursorlineopt: string
+      diff: boolean
+      fcs: string
+      fdc: string
+      fde: string
+      fdi: string
+      fdl: number
+      fdm: string
+      fdn: number
+      fdt: string
+      fen: boolean
+      fillchars: string
+      fml: number
+      fmr: string
+      foldcolumn: string
+      foldenable: boolean
+      foldexpr: string
+      foldignore: string
+      foldlevel: number
+      foldmarker: string
+      foldmethod: string
+      foldminlines: number
+      foldnestmax: number
+      foldtext: string
+      lbr: boolean
+      lcs: string
+      linebreak: boolean
+      list: boolean
+      listchars: string
+      nu: boolean
+      number: boolean
+      numberwidth: number
+      nuw: number
+      previewwindow: boolean
+      pvw: boolean
+      relativenumber: boolean
+      rightleft: boolean
+      rightleftcmd: string
+      rl: boolean
+      rlc: string
+      rnu: boolean
+      sbr: string
+      scb: boolean
+      scl: string
+      scr: number
+      scroll: number
+      scrollbind: boolean
+      scrolloff: number
+      showbreak: string
+      sidescrolloff: number
+      signcolumn: string
+      siso: number
+      so: number
+      spell: boolean
+      statusline: string
+      stl: string
+      ve: string
+      virtualedit: string
+      wfh: boolean
+      wfw: boolean
+      winbl: number
+      winblend: number
+      winfixheight: boolean
+      winfixwidth: boolean
+      winhighlight: string
+      winhl: string
+      wrap: boolean
+   end
+   wo: WindowOptions
 
-  enum ExtendBehavior
-    'error'
-    'keep'
-    'force'
-  end
+   record api
+      --[[
+         API version Information
+            neovim version: 0.7.0
 
-  tbl_add_reverse_lookup: function<K,I>({K:I}): {I:K}
-  tbl_deep_extend: function(ExtendBehavior, table, table, ...: table): table
+            compatible: 0
+            level: 9
+            prerelease: false
+      --]]
 
-  tbl_extend: function(ExtendBehavior, table, table, ...: table): table
+      --[[
+         Vim Type -> Teal Type
+         Boolean -> boolean
+         Buffer -> integer
+         Dictionary -> {string:any}
+         Float -> number
+         Integer -> integer
+         Number -> number
+         String -> string
+         Tabpage -> integer
+         Window -> integer
+         none of the above -> any
+      --]]
 
-  tbl_map: function(function, table): table
+      nvim_buf_add_highlight: function(integer--[[Buffer]], integer--[[Integer]], string--[[String]], integer--[[Integer]], integer--[[Integer]], integer--[[Integer]]): integer--[[Integer]]
+      nvim_buf_attach: function(integer--[[Buffer]], boolean--[[Boolean]], {string:any}--[[Dictionary]]): boolean--[[Boolean]]
+      nvim_buf_call: function(integer--[[Buffer]], any--[[LuaRef]]): any--[[Object]]
+      nvim_buf_clear_namespace: function(integer--[[Buffer]], integer--[[Integer]], integer--[[Integer]], integer--[[Integer]])--[[void]]
+      nvim_buf_create_user_command: function(integer--[[Buffer]], string--[[String]], any--[[Object]], {string:any}--[[Dictionary]])--[[void]]
+      nvim_buf_del_extmark: function(integer--[[Buffer]], integer--[[Integer]], integer--[[Integer]]): boolean--[[Boolean]]
+      nvim_buf_del_keymap: function(integer--[[Buffer]], string--[[String]], string--[[String]])--[[void]]
+      nvim_buf_del_mark: function(integer--[[Buffer]], string--[[String]]): boolean--[[Boolean]]
+      nvim_buf_del_user_command: function(integer--[[Buffer]], string--[[String]])--[[void]]
+      nvim_buf_del_var: function(integer--[[Buffer]], string--[[String]])--[[void]]
+      nvim_buf_delete: function(integer--[[Buffer]], {string:any}--[[Dictionary]])--[[void]]
+      nvim_buf_detach: function(integer--[[Buffer]]): boolean--[[Boolean]]
+      nvim_buf_get_changedtick: function(integer--[[Buffer]]): integer--[[Integer]]
+      nvim_buf_get_commands: function(integer--[[Buffer]], {string:any}--[[Dictionary]]): {string:any}--[[Dictionary]]
+      nvim_buf_get_extmark_by_id: function(integer--[[Buffer]], integer--[[Integer]], integer--[[Integer]], {string:any}--[[Dictionary]]): {integer}--[[ArrayOf(Integer)]]
+      nvim_buf_get_extmarks: function(integer--[[Buffer]], integer--[[Integer]], any--[[Object]], any--[[Object]], {string:any}--[[Dictionary]]): any--[[Array]]
+      nvim_buf_get_keymap: function(integer--[[Buffer]], string--[[String]]): {{string:any}}--[[ArrayOf(Dictionary)]]
+      nvim_buf_get_lines: function(integer--[[Buffer]], integer--[[Integer]], integer--[[Integer]], boolean--[[Boolean]]): {string}--[[ArrayOf(String)]]
+      nvim_buf_get_mark: function(integer--[[Buffer]], string--[[String]]): {integer,integer}--[[ArrayOf(Integer, 2)]]
+      nvim_buf_get_name: function(integer--[[Buffer]]): string--[[String]]
+      nvim_buf_get_offset: function(integer--[[Buffer]], integer--[[Integer]]): integer--[[Integer]]
+      nvim_buf_get_option: function(integer--[[Buffer]], string--[[String]]): any--[[Object]]
+      nvim_buf_get_text: function(integer--[[Buffer]], integer--[[Integer]], integer--[[Integer]], integer--[[Integer]], integer--[[Integer]], {string:any}--[[Dictionary]]): {string}--[[ArrayOf(String)]]
+      nvim_buf_get_var: function(integer--[[Buffer]], string--[[String]]): any--[[Object]]
+      nvim_buf_is_loaded: function(integer--[[Buffer]]): boolean--[[Boolean]]
+      nvim_buf_is_valid: function(integer--[[Buffer]]): boolean--[[Boolean]]
+      nvim_buf_line_count: function(integer--[[Buffer]]): integer--[[Integer]]
+      nvim_buf_set_extmark: function(integer--[[Buffer]], integer--[[Integer]], integer--[[Integer]], integer--[[Integer]], {string:any}--[[Dictionary]]): integer--[[Integer]]
+      nvim_buf_set_keymap: function(integer--[[Buffer]], string--[[String]], string--[[String]], string--[[String]], {string:any}--[[Dictionary]])--[[void]]
+      nvim_buf_set_lines: function(integer--[[Buffer]], integer--[[Integer]], integer--[[Integer]], boolean--[[Boolean]], {string}--[[ArrayOf(String)]])--[[void]]
+      nvim_buf_set_mark: function(integer--[[Buffer]], string--[[String]], integer--[[Integer]], integer--[[Integer]], {string:any}--[[Dictionary]]): boolean--[[Boolean]]
+      nvim_buf_set_name: function(integer--[[Buffer]], string--[[String]])--[[void]]
+      nvim_buf_set_option: function(integer--[[Buffer]], string--[[String]], any--[[Object]])--[[void]]
+      nvim_buf_set_text: function(integer--[[Buffer]], integer--[[Integer]], integer--[[Integer]], integer--[[Integer]], integer--[[Integer]], {string}--[[ArrayOf(String)]])--[[void]]
+      nvim_buf_set_var: function(integer--[[Buffer]], string--[[String]], any--[[Object]])--[[void]]
+      nvim_call_atomic: function(any--[[Array]]): any--[[Array]]
+      nvim_call_dict_function: function(any--[[Object]], string--[[String]], any--[[Array]]): any--[[Object]]
+      nvim_call_function: function(string--[[String]], any--[[Array]]): any--[[Object]]
+      nvim_chan_send: function(integer--[[Integer]], string--[[String]])--[[void]]
+      nvim_clear_autocmds: function({string:any}--[[Dictionary]])--[[void]]
+      nvim_command: function(string--[[String]])--[[void]]
+      nvim_create_augroup: function(string--[[String]], {string:any}--[[Dictionary]]): integer--[[Integer]]
+      nvim_create_autocmd: function(any--[[Object]], {string:any}--[[Dictionary]]): integer--[[Integer]]
+      nvim_create_buf: function(boolean--[[Boolean]], boolean--[[Boolean]]): integer--[[Buffer]]
+      nvim_create_namespace: function(string--[[String]]): integer--[[Integer]]
+      nvim_create_user_command: function(string--[[String]], any--[[Object]], {string:any}--[[Dictionary]])--[[void]]
+      nvim_del_augroup_by_id: function(integer--[[Integer]])--[[void]]
+      nvim_del_augroup_by_name: function(string--[[String]])--[[void]]
+      nvim_del_autocmd: function(integer--[[Integer]])--[[void]]
+      nvim_del_current_line: function()--[[void]]
+      nvim_del_keymap: function(string--[[String]], string--[[String]])--[[void]]
+      nvim_del_mark: function(string--[[String]]): boolean--[[Boolean]]
+      nvim_del_user_command: function(string--[[String]])--[[void]]
+      nvim_del_var: function(string--[[String]])--[[void]]
+      nvim_echo: function(any--[[Array]], boolean--[[Boolean]], {string:any}--[[Dictionary]])--[[void]]
+      nvim_err_write: function(string--[[String]])--[[void]]
+      nvim_err_writeln: function(string--[[String]])--[[void]]
+      nvim_eval: function(string--[[String]]): any--[[Object]]
+      nvim_eval_statusline: function(string--[[String]], {string:any}--[[Dictionary]]): {string:any}--[[Dictionary]]
+      nvim_exec: function(string--[[String]], boolean--[[Boolean]]): string--[[String]]
+      nvim_exec_autocmds: function(any--[[Object]], {string:any}--[[Dictionary]])--[[void]]
+      nvim_exec_lua: function(string--[[String]], any--[[Array]]): any--[[Object]]
+      nvim_feedkeys: function(string--[[String]], string--[[String]], boolean--[[Boolean]])--[[void]]
+      nvim_get_all_options_info: function(): {string:any}--[[Dictionary]]
+      nvim_get_api_info: function(): any--[[Array]]
+      nvim_get_autocmds: function({string:any}--[[Dictionary]]): any--[[Array]]
+      nvim_get_chan_info: function(integer--[[Integer]]): {string:any}--[[Dictionary]]
+      nvim_get_color_by_name: function(string--[[String]]): integer--[[Integer]]
+      nvim_get_color_map: function(): {string:any}--[[Dictionary]]
+      nvim_get_commands: function({string:any}--[[Dictionary]]): {string:any}--[[Dictionary]]
+      nvim_get_context: function({string:any}--[[Dictionary]]): {string:any}--[[Dictionary]]
+      nvim_get_current_buf: function(): integer--[[Buffer]]
+      nvim_get_current_line: function(): string--[[String]]
+      nvim_get_current_tabpage: function(): integer--[[Tabpage]]
+      nvim_get_current_win: function(): integer--[[Window]]
+      nvim_get_hl_by_id: function(integer--[[Integer]], boolean--[[Boolean]]): {string:any}--[[Dictionary]]
+      nvim_get_hl_by_name: function(string--[[String]], boolean--[[Boolean]]): {string:any}--[[Dictionary]]
+      nvim_get_hl_id_by_name: function(string--[[String]]): integer--[[Integer]]
+      nvim_get_keymap: function(string--[[String]]): {{string:any}}--[[ArrayOf(Dictionary)]]
+      nvim_get_mark: function(string--[[String]], {string:any}--[[Dictionary]]): any--[[Array]]
+      nvim_get_mode: function(): {string:any}--[[Dictionary]]
+      nvim_get_namespaces: function(): {string:any}--[[Dictionary]]
+      nvim_get_option: function(string--[[String]]): any--[[Object]]
+      nvim_get_option_info: function(string--[[String]]): {string:any}--[[Dictionary]]
+      nvim_get_option_value: function(string--[[String]], {string:any}--[[Dictionary]]): any--[[Object]]
+      nvim_get_proc: function(integer--[[Integer]]): any--[[Object]]
+      nvim_get_proc_children: function(integer--[[Integer]]): any--[[Array]]
+      nvim_get_runtime_file: function(string--[[String]], boolean--[[Boolean]]): {string}--[[ArrayOf(String)]]
+      nvim_get_var: function(string--[[String]]): any--[[Object]]
+      nvim_get_vvar: function(string--[[String]]): any--[[Object]]
+      nvim_input: function(string--[[String]]): integer--[[Integer]]
+      nvim_input_mouse: function(string--[[String]], string--[[String]], string--[[String]], integer--[[Integer]], integer--[[Integer]], integer--[[Integer]])--[[void]]
+      nvim_list_bufs: function(): {integer}--[[ArrayOf(Buffer)]]
+      nvim_list_chans: function(): any--[[Array]]
+      nvim_list_runtime_paths: function(): {string}--[[ArrayOf(String)]]
+      nvim_list_tabpages: function(): {integer}--[[ArrayOf(Tabpage)]]
+      nvim_list_uis: function(): any--[[Array]]
+      nvim_list_wins: function(): {integer}--[[ArrayOf(Window)]]
+      nvim_load_context: function({string:any}--[[Dictionary]]): any--[[Object]]
+      nvim_notify: function(string--[[String]], integer--[[Integer]], {string:any}--[[Dictionary]]): any--[[Object]]
+      nvim_open_term: function(integer--[[Buffer]], {string:any}--[[Dictionary]]): integer--[[Integer]]
+      nvim_open_win: function(integer--[[Buffer]], boolean--[[Boolean]], {string:any}--[[Dictionary]]): integer--[[Window]]
+      nvim_out_write: function(string--[[String]])--[[void]]
+      nvim_parse_expression: function(string--[[String]], string--[[String]], boolean--[[Boolean]]): {string:any}--[[Dictionary]]
+      nvim_paste: function(string--[[String]], boolean--[[Boolean]], integer--[[Integer]]): boolean--[[Boolean]]
+      nvim_put: function({string}--[[ArrayOf(String)]], string--[[String]], boolean--[[Boolean]], boolean--[[Boolean]])--[[void]]
+      nvim_replace_termcodes: function(string--[[String]], boolean--[[Boolean]], boolean--[[Boolean]], boolean--[[Boolean]]): string--[[String]]
+      nvim_select_popupmenu_item: function(integer--[[Integer]], boolean--[[Boolean]], boolean--[[Boolean]], {string:any}--[[Dictionary]])--[[void]]
+      nvim_set_client_info: function(string--[[String]], {string:any}--[[Dictionary]], string--[[String]], {string:any}--[[Dictionary]], {string:any}--[[Dictionary]])--[[void]]
+      nvim_set_current_buf: function(integer--[[Buffer]])--[[void]]
+      nvim_set_current_dir: function(string--[[String]])--[[void]]
+      nvim_set_current_line: function(string--[[String]])--[[void]]
+      nvim_set_current_tabpage: function(integer--[[Tabpage]])--[[void]]
+      nvim_set_current_win: function(integer--[[Window]])--[[void]]
+      nvim_set_decoration_provider: function(integer--[[Integer]], {string:any}--[[Dictionary]])--[[void]]
+      nvim_set_hl: function(integer--[[Integer]], string--[[String]], {string:any}--[[Dictionary]])--[[void]]
+      nvim_set_keymap: function(string--[[String]], string--[[String]], string--[[String]], {string:any}--[[Dictionary]])--[[void]]
+      nvim_set_option: function(string--[[String]], any--[[Object]])--[[void]]
+      nvim_set_option_value: function(string--[[String]], any--[[Object]], {string:any}--[[Dictionary]])--[[void]]
+      nvim_set_var: function(string--[[String]], any--[[Object]])--[[void]]
+      nvim_set_vvar: function(string--[[String]], any--[[Object]])--[[void]]
+      nvim_strwidth: function(string--[[String]]): integer--[[Integer]]
+      nvim_subscribe: function(string--[[String]])--[[void]]
+      nvim_tabpage_del_var: function(integer--[[Tabpage]], string--[[String]])--[[void]]
+      nvim_tabpage_get_number: function(integer--[[Tabpage]]): integer--[[Integer]]
+      nvim_tabpage_get_var: function(integer--[[Tabpage]], string--[[String]]): any--[[Object]]
+      nvim_tabpage_get_win: function(integer--[[Tabpage]]): integer--[[Window]]
+      nvim_tabpage_is_valid: function(integer--[[Tabpage]]): boolean--[[Boolean]]
+      nvim_tabpage_list_wins: function(integer--[[Tabpage]]): {integer}--[[ArrayOf(Window)]]
+      nvim_tabpage_set_var: function(integer--[[Tabpage]], string--[[String]], any--[[Object]])--[[void]]
+      nvim_ui_attach: function(integer--[[Integer]], integer--[[Integer]], {string:any}--[[Dictionary]])--[[void]]
+      nvim_ui_detach: function()--[[void]]
+      nvim_ui_pum_set_bounds: function(number--[[Float]], number--[[Float]], number--[[Float]], number--[[Float]])--[[void]]
+      nvim_ui_pum_set_height: function(integer--[[Integer]])--[[void]]
+      nvim_ui_set_option: function(string--[[String]], any--[[Object]])--[[void]]
+      nvim_ui_try_resize: function(integer--[[Integer]], integer--[[Integer]])--[[void]]
+      nvim_ui_try_resize_grid: function(integer--[[Integer]], integer--[[Integer]], integer--[[Integer]])--[[void]]
+      nvim_unsubscribe: function(string--[[String]])--[[void]]
+      nvim_win_call: function(integer--[[Window]], any--[[LuaRef]]): any--[[Object]]
+      nvim_win_close: function(integer--[[Window]], boolean--[[Boolean]])--[[void]]
+      nvim_win_del_var: function(integer--[[Window]], string--[[String]])--[[void]]
+      nvim_win_get_buf: function(integer--[[Window]]): integer--[[Buffer]]
+      nvim_win_get_config: function(integer--[[Window]]): {string:any}--[[Dictionary]]
+      nvim_win_get_cursor: function(integer--[[Window]]): {integer,integer}--[[ArrayOf(Integer, 2)]]
+      nvim_win_get_height: function(integer--[[Window]]): integer--[[Integer]]
+      nvim_win_get_number: function(integer--[[Window]]): integer--[[Integer]]
+      nvim_win_get_option: function(integer--[[Window]], string--[[String]]): any--[[Object]]
+      nvim_win_get_position: function(integer--[[Window]]): {integer,integer}--[[ArrayOf(Integer, 2)]]
+      nvim_win_get_tabpage: function(integer--[[Window]]): integer--[[Tabpage]]
+      nvim_win_get_var: function(integer--[[Window]], string--[[String]]): any--[[Object]]
+      nvim_win_get_width: function(integer--[[Window]]): integer--[[Integer]]
+      nvim_win_hide: function(integer--[[Window]])--[[void]]
+      nvim_win_is_valid: function(integer--[[Window]]): boolean--[[Boolean]]
+      nvim_win_set_buf: function(integer--[[Window]], integer--[[Buffer]])--[[void]]
+      nvim_win_set_config: function(integer--[[Window]], {string:any}--[[Dictionary]])--[[void]]
+      nvim_win_set_cursor: function(integer--[[Window]], {integer,integer}--[[ArrayOf(Integer, 2)]])--[[void]]
+      nvim_win_set_height: function(integer--[[Window]], integer--[[Integer]])--[[void]]
+      nvim_win_set_option: function(integer--[[Window]], string--[[String]], any--[[Object]])--[[void]]
+      nvim_win_set_var: function(integer--[[Window]], string--[[String]], any--[[Object]])--[[void]]
+      nvim_win_set_width: function(integer--[[Window]], integer--[[Integer]])--[[void]]
+   end
 
-  tbl_keys: function(table): table
 
-  tbl_filter: function((function(any): boolean), table): table
+   record json
+      record DecodeOpts
+         record Luanil
+            object: boolean
+            array: boolean
+         end
 
-  tbl_count: function(table): integer
+         luanil: Luanil
+      end
 
-  tbl_isempty: function(table): boolean
+      encode: function(string)
+      decode: function(string, DecodeOpts)
+   end
 
-  tbl_islist: function(table): boolean
+   record ui
+      record InputOpts
+         prompt: string
+         completion: string
+         highlight: function()
+      end
+      input: function(InputOpts, function(string))
 
-  tbl_contains: function(table, any): boolean
-
-  record InspectOptions
-    depth: number
-    newline: string
-    indent: string
-    process: function
-  end
-  record inspect
-    METATABLE: any
-    KEY: any
-    metamethod __call: function(inspect, any, InspectOptions): string
-    metamethod __call: function(inspect, any): string
-  end
+      record SelectOpts
+         prompt: string
+         format_item: function(any): string
+         kind: string
+      end
+      select: function(any, SelectOpts, function(any, integer))
+   end
 end
