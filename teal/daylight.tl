@@ -30,7 +30,7 @@ local configuration = {
   },
   night = {
     name = vim.g.colors_name,
-    time = 19,
+    time = 18,
   },
   interval = 60000, -- 1m
 } as config
